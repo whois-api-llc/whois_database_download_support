@@ -1,0 +1,208 @@
+Changes
+------
+
+0.0.16:
+  o Handling 403: Forbidden errors in wget
+  o Dry run emulates 10 part-files when downloading multipart archives
+    (Can be configured with the DRY_RUN_MULTIFILE_LIMIT variable
+  o Quarterly downloads require explicit database specifications
+
+0.0.15:
+  o Added daily ngtlds feeds such as:
+        - ngtlds_domain_names_whois_filtered_reg_country
+        - ngtlds_domain_names_whois_filtered_reg_country_noproxy
+        - ngtlds_domain_names_whois_archive
+        - ngtlds_domain_names_whois_filtered_reg_country_archive
+        - ngtlds_domain_names_whois_filtered_reg_country_noproxy_archive
+
+0.0.14:
+  o Cctld newly discovered daily data domain_names_new and domain_names_whois added.
+  o Cctld newly registered daily data domain_names_new, domain_names_whois, domain_names_dropped,
+  and domain_names_dropped_whois added.
+  o Fixed a bug with whois_database_combined not working exactly as intended.
+  o domain_list_quarterly sql feed fixed
+
+0.0.13:
+  o Fixed bug where ngtlds feed was getting an error when downloading supported tlds
+
+0.0.12:
+  o Fixed bug where "bad feeds" were not being handled properly.
+  o Add file format "all" which downloads all available file formats for a given feed.
+  o Added full and sql file formats to domain_names_whois_archive feed.
+
+0.0.11:
+  o Added data feed support for domain_names_dropped_whois and ngtlds_domain_names_dropped_whois
+
+0.0.10:
+  o Added download support for legacy gtld quarterly data v1 and v2
+
+0.0.9:
+  o Input date format fixed. 
+
+0.0.8:
+  o Added the feed whois_database_combined. Could not test because auth failed.
+
+0.0.7:
+  o Removed the --dry command line options from the tests. Now have to tests,
+    ut_whoisdownload with dry run and ft_whoisdownload with full download. 
+
+0.0.6:
+  o Added the --tld-file command line option. It it is provided it will expect a
+    list of domains (e.g. asia,us,tel) in the file and will use that instead of
+    the downloadable tld files.
+  o Modified and enhanced the tests to check the new tld download methods.
+  o If needed the supported_gtlds files supported_ngtlds are loaded from the
+    directory where the script was started. This was wrong in the previous 
+    version.
+  o Downloading of tlds for the whois_database feed is fixed.
+
+0.0.5:
+  o Added the new ways to download tld list. Need to be tested.
+
+0.0.4:
+  o All the date formats that are supported by the date(1) utility are now
+    supported by the --date option.
+  o Because of this I had to re-organize the code and so multiple dates now
+    available by using the --date option more than once (e.g. 
+    --date="2015-10-20" --date="2015-10-21"). This date change proced to be more
+    annoyance than I thought, sorry about that.
+  o It is now possible to run the program without the --date option if the
+    data feed needs no date to be set.
+  o Added the long file format name versions, so from now on regular_csv,
+    simple_csv, full_csv and mysqldump fiel formats are also accepted.
+  o Some data sources dropped some older dates I used in tests so I had to
+    modify my tests and re-run them.
+
+
+Examples
+--------
+Example 1
+Downloading the domain_names_new data source for all the top level domains at
+one specific date.
+
+    ./whoisdownload.sh \
+        --user=demo \
+        --password=XXXXXX \
+        --date=2015-08-29 \
+        --output-dir=./tmp  \
+        --data-feeds=domain_names_new
+
+
+Example 2
+Download the ngtlds_domain_names_new for three consecutive days for the
+airforce and actor domains.
+
+    ./whoisdownload.sh \
+        --user=demo \
+        --password=XXXXXX \
+        --tld="airforce actor" \
+        --date=2015-09-16 \
+        --n=3 \
+        --output-dir=./tmp  \
+        --data-feeds=ngtlds_domain_names_new
+
+
+Example 3
+Downloading the domain_names_new data source of .mobi domain for 14 days
+starting at a specific date.
+
+    ./whoisdownload.sh \
+        --user=demo \
+        --password=XXXXXX \
+        --date=2015-08-29 \
+        --output-dir=./tmp  \
+        --tld=mobi \
+        --n=14 \
+        --data-feeds=domain_names_new
+
+
+Example 4
+Downloading the domain_names_whois data source for all the supported tlds at a
+specific date.
+
+    ./whoisdownload.sh \
+        --user=demo \
+        --password=XXXXXX \
+        --date=2015-08-29 \
+        --output-dir=./tmp  \
+        --data-feeds=domain_names_whois
+
+
+Example 5
+Downloading files for two datasources, two domains and two dates, six
+downloads altogether.
+
+    ./whoisdownload.sh \
+        --user=demo \
+        --password=XXXXXX \
+        --output-dir=./tmp  \
+        --date="2015-10-20 2015-10-21" \
+        --tld="org info" \
+        --data-feeds="domain_names_new domain_names_dropped"
+
+
+Example 6
+Download the v13 version of the whois_database for one date and one tld.
+
+    ./whoisdownload.sh \
+        --verbose \
+        --user=demo \
+        --password=XXXXXX \
+        --file-format=simple \
+        --db-version=v13 \
+        --date=2015-08-21 \
+        --tld=tel \
+        --output-dir=./tmp \
+        --data-feeds=whois_database
+
+
+Example 7
+Downloading the whois_database data source in MySQL dump data format for a
+given date and top level domain.
+
+    ./whoisdownload.sh \
+        --user=demo \
+        --password=XXXXXX \
+        --file-format=sql \
+        --date=2015-08-19 \
+        --tld=tel \
+        --output-dir=./tmp  \
+        --data-feeds=whois_database
+
+
+Example 8
+Download the v13 version of the whois_database for for all tld.
+
+    ./whoisdownload.sh \
+        --verbose \
+        --user=demo \
+        --password=XXXXXX \
+        --file-format=simple \
+        --db-version=v13 \
+        --output-dir=./tmp \
+        --data-feeds=whois_database
+
+Example 9
+Download the v3 version of the whois_database for for all tld.
+
+    ./whoisdownload.sh \
+        --verbose \
+        --user=demo \
+        --password=XXXXXXX \
+        --file-format=simple \
+        --db-version=v3 \
+        --output-dir=./tmp \
+        --data-feeds=domain_list_quarterly
+
+Example 10
+Download the v3 version of the whois_database for for one tld.
+
+    ./whoisdownload.sh \
+        --verbose \
+        --user=demo \
+        --password=XXXXXX \
+        --file-format=simple \
+        --db-version=v3 \
+        --tld=uk
+        --output-dir=./tmp \
+        --data-feeds=domain_list_quarterly

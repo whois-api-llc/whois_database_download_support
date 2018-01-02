@@ -1,0 +1,7 @@
+-When downloading from whois_database 
+ there is no way to download sql schema + separate tables.
+ This should be a format like sqlschematables, which downloads
+ whoiscrawler_$version_$tld_mysql_schema.sql.gz
+ and the tables subdirectory.
+
+-Sample data cannot be downloaded.

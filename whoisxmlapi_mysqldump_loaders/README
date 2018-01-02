@@ -1,0 +1,201 @@
+Documentation for the WhoisXML API
+
+Documentation for WhoisXML API
+MySQL ASCII dump loader scripts
+(BASH version)
+
+(Note: there  is a  separate file  named README_Python.txt  for Python
+scripts. If you do not plan to  work with huge domains such as .com or
+you are using a Windows system, we recommend to first check the Python
+scripts which contain a simple GUI and they are easier to use than the
+bash shell scripts.)
+
+Document version 1.0 dated 2017-07-14
+
+Copyright (c) 2010-2017 Whois API LLC,  http://www.whoisxmlapi.com
+
+The scripts are provided for our subscribers to load ASCII mysql dumps
+obtained from our  quarterly feeds into MySQL  databases.  The scripts
+can be used also as an example to create custom loader scripts.
+
+
+The scripts are available from the URLs:
+----------------------------------------
+
+From the quarterly gtld sample and production URLs, versions from v19 or above:
+
+http://domainwhoisdatabase.com/whois_database/sample/gtlds/$ver/mysql_loader_scripts
+http://domainwhoisdatabase.com/whois_database/$ver/docs/mysql_loader_scripts
+
+From the quarterly cctld sample and production URLs, versions from v5 or above:
+
+http://domainwhoisdatabase.com/whois_database/sample/cctlds/$ver/mysql_loader_scripts
+http://domainwhoisdatabase.com/domain_list_quarterly/$ver/docs/mysql_loader_scripts
+
+(Please replace $ver with the appropriate version, e.g. v5 or v20 .)
+
+Contents:
+---------
+
+1. List of files
+
+2. Obtaining data
+
+3. Software environment
+
+4. Loading schema and table data from separate files
+
+5. Loading schema and table data from a single file
+
+6. Loading multiple tlds and other usage examples
+
+1. List of files:
+----------------
+
+README			  : this file
+load_mysql_utils.sh	  : utility functions used in all scripts
+			    	This should be there in the same
+				directory as the scripts themselves
+load_mysql_data_per_tables.sh: script to load schema first, then the data
+			       from separate files
+load_mysql_data_all.sh	:   script to load single-file backups
+
+legacy			: a directory containing legacy versions of
+			  these scripts which were in use before July 2017.
+README_Python.txt       : Documentation of the Python scripts for the same task
+load_mysq_data.py       : Python (series 2) script for the same task.
+			  Documented separately in the file README_Python.txt
+
+2. Obtaining data
+-----------------
+
+Sample data can be obtained from
+
+http://domainwhoisdatabase.com/whois_database/sample/gtlds/v20/mysqldump_sample
+
+(replace v20 by the actual version)
+
+Production data can be obtained from
+
+http://domainwhoisdatabase.com/whois_database/v20/database_dump/mysqldump/
+
+(replace v20 by the actual version)
+
+Single-file backups of production data can be also downloaded with our downloader scripts. Example:
+
+./whoisdownload.sh --verbose --user my_username --password my_password  --db-version v20 --data-feeds whois_database --tld "aaa" --file-format sql --output-dir=testdir
+
+We refer to the documentation of the downloader scripts for further details.
+
+3. Software environment
+-----------------------
+
+The present version was tested with
+
+mysql  Ver 14.14 Distrib 5.7.18
+
+and
+
+GNU bash, 4.3.48(1)-release
+
+on a machine running Ubuntu Linux 16.4.02 LTS.
+
+The scripts are standard ones which have to work with earlier versions
+of bash  also on  other systems  (Linux, Mac OS  X, and  Windows).  It
+should be compatible with other version of MySQL, too.
+
+If you run into an incompatibility, please contact our support.
+
+4. Loading schema and table data from separate files
+----------------------------------------------------
+
+Note: in the tasks described here and in Section 2.4 the syntax of the
+used scripts is the same if you use the --tld option.
+
+In the following example we plan to create our MySQL table for the tld
+"aaa" loading the schema first, then the data.
+
+This approach  is recommended for large  tlds such as "com".   In such
+cases we also recommend to  use the --show-progress option which draws
+a  progress bar  showing the  status of  loading of  each file  and an
+estimated time  when it will be  ready. Note that e.g.  loading of the
+data of the "com" domain will take several days, so it is important to
+follow what is going on.
+
+As an input we need the files
+
+whoiscrawler_$version_$tld_mysql_schema.sql.gz
+
+(e.g. whoiscrawler_v20_aaa_mysql_schema.sql.gz) and the "tables"
+subdirectory in the same directory as this file.
+
+The script to be used is load_mysql_data_per_tables.sh 
+
+run  the script  with  the --help  option to  see  the parameters  and
+examples to load  your data (the examples in the  help message scripts
+are for loading the data of the "aaa" domain).
+
+Note: the  script has three  options which can be  used to do  the job
+partially, or the whole in multiple steps:
+
+--no-create-db  skips the step of creating a new database.
+		In this case the script assumes that the MySQL database
+		to be used already exists.
+--data-only	skips the loading of the schema,
+		only loads data into the database.
+		The database is assumed to exist in this case, too.
+--schema-only   Loads the schema only (and creates the database without
+		--no-create-db). The data are not loaded.
+
+
+5. Loading single-file backups
+------------------------------
+
+Note: in the tasks described here and in Section 2.3 the syntax of the
+used scripts is the same if you use the --tld option.
+
+In the following example we plan to create our MySQL table for the tld
+"aaa" loading its single-file backup
+
+As an input we need the file
+
+whoiscrawler_$version_$tld_mysql.sql.gz
+
+E.g. whoiscrawler_v20_aaa_mysql.sql.gz .
+
+The script to be used is load_mysql_data_all.sh 
+
+run  the script  with  the --help  option to  see  the parameters  and
+examples to load  your data (the examples in the  help message scripts
+are for loading the data of the "aaa" domain).
+
+6 Loading data for multiple tlds
+--------------------------------
+
+Assume you  have downloaded data for  the following tlds from  the v20
+quarterly release:
+
+asia,us,biz,mobi,info,org,net,com
+
+and you have placed the data into a subdirectories
+
+database_dump/mysqldump/$tld
+
+of the directory where the scripts reside.
+
+Assume you want to load them into databases named "production_db_$tld"
+with your mysql user "whoisuser" who has the password "whoispassword".
+
+To load  them all  so that you  load the schema  first then  data from
+tables, the following command-line will do the job in bash:
+
+	for tld in asia us biz mobi info org net com; do ./load_mysql_data_per_tables.sh --mysql-database=production_db_$tld --mysql-user=whoisuser --mysql-password=whoispassword --schema-files-dir=database_dump/mysqldump --tld=$tld --db-version=v20;done
+
+Alternatively, you may load the data from single files:
+
+        for tld in asia us biz mobi info org net com; do ./load_mysql_data_all.sh --mysql-database=production_db_$tld --mysql-user=whoisuser --mysql-password=whoispassword --dump-files-dir=database_dump/mysqldump --tld=$tld --db-version=v20;done
+
+(Note that we have changed the name of the script only.)
+
+The  above examples  can  be  used as  a  template  to manage  various
+situations in bash.

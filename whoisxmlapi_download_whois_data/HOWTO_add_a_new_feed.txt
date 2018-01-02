@@ -1,0 +1,29 @@
+For developers/testers:
+
+how to add a new feed
+
+1. Open feeds.ini with your favourite programming text editor
+
+2. Add a new section (to a logical place) with the section name
+
+feed__dataformat
+
+Note: as ini files do not support hierarchy, you will need a record
+for each dataformat. Take care that the common data should be similar.
+
+See the examples already there.
+
+3. Fill the required feeds according to the already added feeds. In
+file names you can use the follwing strings which will be substituted:
+     $dbversion: quarterly database version, e.g. 'v6' or 'v20'
+     $date: date string for daily feeds, e.g. '2017_08_20'
+     $minusdate: date string for daily feeds in the format e.g. '2017-08-20'
+     $_date: date string preceded by an underscore, e.g. '_2017_08_20'
+     $tld: tld, e.g. 'com' or 'ac.at'
+     $tldunderscore: tld string, dots replaced by underscores, e.g. 'ac_at' for
+     		     'ac.at'
+     $filename: a file name. Used in file masks which are derived from files such as md5mask
+     $ALLFILES: all files of the directory. Typically for subdirectories with csvs.	 
+If you need more, let us know.
+
+4. Give it a try.
