@@ -15,8 +15,19 @@ It is  a cross-platform solution for  end-users. It should be  used on
 Windows  and Linux/Unix  type  systems and  does  not require  special
 experience apart from the ability to use MySQL.
 
-The scripts are are available from the URLs:
---------------------------------------------
+Script availability:
+--------------------
+
+The primary location of this script is the public GitHub repository
+
+https://github.com/whois-api-llc/data_feed_and_database_support
+
+The script is located in the subdirectory
+
+whoisxmlapi_mysql_loaders
+
+In addition, WhoisXML API subscribers can access the scripts from the
+following URLs:
 
 From the quarterly gtld sample and production URLs, versions from v19 or above:
 

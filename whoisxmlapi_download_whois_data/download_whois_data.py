@@ -25,7 +25,7 @@ import whois_utils.whois_user_interaction as whois_user_interaction
 from whois_utils.whois_user_interaction import *
 
 #GlobalSettings
-VERSION = "0.0.3"
+VERSION = "0.0.4"
 MYNAME = sys.argv[0].replace('./','')
 FEEDCONFIGDIR='.'
 
@@ -58,6 +58,7 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
     parser.add_argument('--enddate', help= 'The end date for quarterly feed download, format: YYYYMMDD.\nIf not provided, data are loaded for the startdate only.')
     parser.add_argument('--list-supported-tlds', help='download data for these tlds.', action='store_true')
     parser.add_argument('--tlds', help='Download data for these tlds. For data formats which are tld independent, you must chose a single supported by the feed, but it will be ignored.')
+    parser.add_argument('--all-tlds', help='Download data for all available tlds. Overrides --tlds', action='store_true')
     parser.add_argument('--output-dir', help='Directory to download files into.')
     args = parser.parse_args()
     args = vars(args)
@@ -148,13 +149,19 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
             sys.stderr.write('%s, ' % tld)
         sys.stderr.write("\n")
         exit(6)
-    #Verify supported tlds list
-    try:
-        args['tlds'] = args['tlds'].split(',')
-    except:
-        print_error_and_exit('You must specifiy the list of tlds to download')
-    tldsset=set(args['tlds'])
-    args['tlds'] = list(tldsset.intersection(set(available_tlds)))
+    #Here we have the set of available tlds
+    if args['all_tlds']:
+        args['tlds'] = available_tlds
+    else:
+        #We set up the tld set as the intersection of the ones given in
+        #--tlds and the supported one.
+        #Verify supported tlds list
+        try:
+            args['tlds'] = args['tlds'].split(',')
+        except:
+            print_error_and_exit('You must specifiy the list of tlds to download')
+        tldsset=set(args['tlds'])
+        args['tlds'] = list(tldsset.intersection(set(available_tlds)))
     if args['tlds'] == []:
         print_error_and_exit('All specified tlds are unsupported.')
     #verify if the output directory exists

@@ -4,7 +4,7 @@ Whois data download utility
 
 download_whois_data.py
 
-Release version 0.1 dated 2017-09-19.
+Release version 0.0.4 dated 2018-01-04.
 
 Copyright (c) 2010-2017 Whois API LLC,  http://www.whoisxmlapi.com
 ------------------------------------------------
@@ -29,8 +29,20 @@ experience.
 The user should be familiar, however, with the feeds and data formats,
 which are described in the reference manuals of the respective feeds.
 
-The scripts are available from the URLs:
---------------------------------------------
+Script availability:
+--------------------
+
+The primary location of this script is the public GitHub repository
+
+https://github.com/whois-api-llc/data_feed_and_database_support
+
+The script is located in the subdirectory
+
+whoisxmlapi_download_whois_data
+
+In addition, WhoisXML API subscribers can access the scripts from the
+following URLs:
+
 Quarterly releases:
 
 http://www.domainwhoisdatabase.com/whois_database/$releaseversion/docs/download_scripts

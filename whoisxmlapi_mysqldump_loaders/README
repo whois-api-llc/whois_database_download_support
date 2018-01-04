@@ -19,10 +19,19 @@ obtained from our  quarterly feeds into MySQL  databases.  The scripts
 can be used also as an example to create custom loader scripts.
 
 
-The scripts are available from the URLs:
-----------------------------------------
+Script availability:
+--------------------
 
-From the quarterly gtld sample and production URLs, versions from v19 or above:
+The primary location of this script is the public GitHub repository
+
+https://github.com/whois-api-llc/data_feed_and_database_support
+
+The script is located in the subdirectory
+
+whoisxmlapi_mysql_loaders
+
+In addition, WhoisXML API subscribers can access the scripts from the
+following URLs:
 
 http://domainwhoisdatabase.com/whois_database/sample/gtlds/$ver/mysql_loader_scripts
 http://domainwhoisdatabase.com/whois_database/$ver/docs/mysql_loader_scripts
