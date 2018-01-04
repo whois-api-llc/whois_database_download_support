@@ -9,7 +9,8 @@ Document version 1.0 dated 2017-07-27
 Copyright (c) 2010-2017 Whois API LLC,  http://www.whoisxmlapi.com
 
 The script is  provided for our subscribers to load  ASCII MySQL dumps
-obtained from our quarterly feeds into MySQL databases.
+obtained from our quarterly feeds into MySQL RDBMS in order to create a
+WHOIS database.
 
 It is  a cross-platform solution for  end-users. It should be  used on
 Windows  and Linux/Unix  type  systems and  does  not require  special

@@ -8,19 +8,12 @@ Release version 0.0.4 dated 2018-01-04.
 
 Copyright (c) 2010-2017 Whois API LLC,  http://www.whoisxmlapi.com
 ------------------------------------------------
-Disclaimer:
------------
-
-This a fist public beta prerelease of the present script.  This script
-is     intended     to     replace     "get_whois_info_python"     and
-"whois_download_bash". It is more complete  and supports all the feeds
-available in our  Reference Manuals. It may, however,  still lack some
-features  or contain  minor bugs.  If  you have  any feedback,  please
-communicate it to our support.
-------------------------------------------------
 
 The script is provided for our subscribers to download data from their
 daily and quarterly data feed subscriptions.
+
+The aim of the script is to support web download of WHOIS data,
+especially in order to set up a WHOIS database.
 
 It is  a cross-platform solution for  end-users. It should be  used on
 Windows  and Linux/Unix  type  systems and  does  not require  special
@@ -205,6 +198,11 @@ Download mysql  binary dumps (percona)  and simple csv files  for tlds
 "download_testdir" (should exist already):
 
 ./download_whois_data.py --verbose --feed whois_database --db-version v20 --dataformat percona,simple_csv --tlds aaa,abarth --output-dir download_testdir
+
+Download simple csv files for all tlds from the quarterly release v20
+into the directory /tmp (should exist already):
+
+./download_whois_data.py --verbose --feed whois_database --db-version v20 --dataformat simple_csv --all-tlds --output-dir /tmp
 
 Download full  csv files for  the tld aero from 20170810  to 20170812
 into "download_testdir" 
