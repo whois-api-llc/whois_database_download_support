@@ -20,7 +20,7 @@ Script availability:
 
 The primary location of this script is the public GitHub repository
 
-https://github.com/whois-api-llc/data_feed_and_database_support
+https://github.com/whois-api-llc/whois_database_download_support
 
 The script is located in the subdirectory
 

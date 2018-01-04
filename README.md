@@ -1,6 +1,6 @@
 These are scripts provided by WhoisXML API, Inc.,
 for clients using WHOIS data feeds to obtain bulk whois data
-or to set up a WxHOIS database.
+or to set up a WHOIS database.
 
 The contents of the subdirectories are:
 
