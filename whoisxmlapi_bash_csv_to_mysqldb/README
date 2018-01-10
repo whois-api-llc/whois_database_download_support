@@ -1,0 +1,173 @@
+README document for
+
+CSV importing scripts and schema
+
+Document version: 1.0
+Dated: 06-07-2017.
+
+Contents:
+---------
+1. List of files
+2. Script specification
+3. Example of use
+
+1. List of files
+----------------
+
+load_csv_file_into_db.sh	     -- loader script in Bash, this is the one documented here
+load_csv_file_into_db_old.sh	     -- legacy version of loader script in Bash, used till July 2017.
+loader_schema_full.sql        	     -- schema file for full csv-s (daily and quarterly feeds)
+loader_schema_regular_daily.sql	     -- schema file for regular csv-s from daily feeds
+loader_schema_regular_quarterly.sql  -- schema file for regular csv-s from quarterly feeds
+loader_schema_simple.sql 	     -- schema file for simple csv-s (quarterly feeds only)
+README				     -- this file
+
+2. Script specification
+-----------------------
+
+Name: load_csv_file_into_db.sh -- loads data from a csv file downloaded from WhoisXML API feeds
+      			       	  into a table in a mysql database.	
+
+Synopsis: load_csv_file_into_db.sh [OPTION]...
+
+Description: The script loads a csv file with Whois information,
+	downloaded from a subscription to WhoisXML API feeds into a
+	database table. The type of the csv file (simple, regular, or
+	full, see the manual of the feeds) should be specified and the
+	appropriate schema file supplied here should be used.
+	The table into which data are loaded is 
+	  whois_record_flat for 'full' csv-s, 
+	  whois_record_flat_simple for 'simple' csv-s, and
+  	  whois_record_flat_regular for 'regular' csv-s.
+
+	The command-line options of the script are:
+
+	 -h, --help                  Print this help and exit.
+	 -v, --version               Print version information and exit.
+	 --verbose                   Print more messages.
+         --mysql-user=USERNAME       User name to login to the mysql database (optional).
+         --mysql-password=PASSWORD   Password to login to the data source (optional).
+         --mysql-database=DATABASE   The name of the mysql database to load data into.
+         --csv-format=FORMAT         The format of the csv file to be loaded. Must be one of 'regular', 'simple' or 'full'.
+         --schema-file=SCHEMAFILE    The schema file to be used when loading. These are provided with the script.
+         --csv-file=CSVFILE          The csv file to be loaded.
+
+3. Example of use
+-----------------
+
+Here we describe a simple and complete workflow.
+
+Assume we want to have the quarterly data from the v19 version of
+quarterly databases, for the ``aeg'' and ``active'' tlds in a mysql
+database. You intend to do this by downloading csv files and importing
+them. Here is what to do, from scratch.
+
+Step 1. Download some simple csv-s
+
+Download the latest version of whoisdownload_bash from the docs
+subdirectory of quarterly releases and from
+http://bestwhois.org/domain_name_data/docs/scripts, depending on your
+subscription.
+
+The actual version was whoisdownload_bash-0.0.16.tar.gz when this
+manual was written, but it maybe newer, please download the latest
+available one and use its name in the command-line below.  Untar the
+file, and change into its directory:
+
+tar zxvf whoisdownload_bash-0.0.16.tar.gz;cd whoisdownload_bash
+
+In order to download the required csv-s, we use this download scripts
+in the following form (please substitute the CAPITALIZED words with
+your username and password):
+
+./whoisdownload.sh --verbose --user USERNAME --password PASSWORD  --db-version v19 --data-feeds whois_database --tld "aeg active" --file-format simple
+
+This will have the following output to stdout:
+
+whois_database/v19/csv/tlds/simple/csvs.aeg.simple.tar.gz [OK]
+whois_database/v19/csv/tlds/simple/csvs.active.simple.tar.gz [OK]
+
+(If instead of [OK] you get something else, then it is likely that
+there is something wrong with your password.)
+
+The resulting files are in the subdirectory
+
+whois_database/v19/csv/tlds/simple/
+
+(You may modify this behavior with the command-line argument
+--output-dir of whoisdownloader.sh, see also
+whoisdownload.sh --help
+)
+
+Move the files, csvs.active.simple.tar.gz and csvs.aeg.simple.tar.gz
+to a suitable directory, and uncompress them:
+
+tar zxvf csvs.active.simple.tar.gz
+tar zxvf csvs.aeg.simple.tar.gz
+
+Now you have a simple subdirectory, in which there are the aeg and
+active subdirectories, in which there are the csv files (in the
+example, only one of them, named 1.csv).
+
+Step 2 (optional).
+Prepare your mysql database.  We assume that mysql is already
+installed and you can administer it. Were this not the case, please
+consult the documentation of mysql.
+
+Important: in order to load data into mysql from files, you need to
+disable the ``secure-file-priv'' option of mysql. This can be done by
+adding the following line:
+
+secure-file-priv = ""
+
+to your mysqld configuration file in the section [mysqld].  (The
+location of the configuration file varies with the
+installation. Traditionally it is called my.cnf. In Ubuntu systems,
+for instance, you will find this section in
+/etc/mysqld/mysql.conf.d/mysqld.cnf.) After editing the config you
+need to restart the mysql service.
+
+If you already have access credentials for the appropriate user and a
+database you want to use exists, you may omit the next steps. In our
+example we shall use the username ``whoisuser'' who will have the
+password ``whoispassword''.
+
+Otherwise create the respective user: as the mysql administrator do 
+
+CREATE USER whoisuser IDENTIFIED BY 'whoispassword';
+
+Create a database (``whoisdatabase'' in this example) which we shall
+use:
+
+CREATE DATABASE whoisdatabase;
+
+Grant all privileges on this database to this user:
+
+GRANT ALL ON whoisdatabase.* to whoisuser;
+
+Finally, as you want to load data from files, the user needs to have
+the required privileges, so do:
+
+GRANT file ON *.* to whoisuser;
+
+3. Load your data into the file
+
+Assume that you have uncompressed the downloaded files in the same
+subdirectory where the script resides.  To load the files you have to
+do
+
+./load_csv_file_into_db.sh --mysql-user=whoisuser --mysql-password=whoispassword --mysql-database=whoisdatabase  --schema-file=loader_schema_simple.sql --csv-file=simple/aeg/1.csv --csv-format=simple
+
+and for the other domain:
+
+./load_csv_file_into_db.sh --mysql-user=whoisuser --mysql-password=whoispassword --mysql-database=whoisdatabase  --schema-file=loader_schema_simple.sql --csv-file=simple/active/1.csv --csv-format=simple
+
+Logging in to the database, the data will be there in the table
+"whois_record_flat_simple", you can now work with them.
+
+Note again that the script creates each record which was in the input
+csv, it does not check if it already existed. This may lead to
+repetitions, e.g. when the script is run twice with the same
+arguments.
+
+-------end of document-------

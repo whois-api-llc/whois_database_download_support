@@ -1,0 +1,171 @@
+flexible_csv_to_mysqldb.py -- a Python3 scripts to create and maintain a
+		      	 WHOIS database in MySQL, using csv files
+			 obtained from WhoisXML API.
+
+ver. 0.0.1, dated 2018.01.09.
+
+Contents:
+
+1. INSTALLATION
+2. OBTAINING DATA
+3. USING THE SCRIPT
+
+1. INSTALLATION
+
+This is a Python3 script, so you  need Python 3 to be installed. Also,
+as  it deals  with  mysql connections,  you  need the  mysql.connector
+package for python3, too.
+
+Important: at the time of  writing this README, mysql.connector is not
+yet available for  Python with version greater than  3.5. Hence please
+do not use a newer version of Python 3 on any platform.
+
+For Linux/Mac OS X users, you typically need os packages named
+
+python3
+
+and
+
+python3-mysql.connector
+
+On Ubuntu and its derivatives, you can install them by running
+
+apt-get install python3 python3-pip
+
+as root.   The mysql connector for  Python is also available  from its
+official webpage for your architecture:
+
+http://dev.mysql.com/downloads/connector/python
+
+On  other Linux  platforms, you  install these  requirements with  the
+appropriate package manager.
+
+Windows users have two options:
+
+If you  install Bash on Ubuntu  on Windows for your  Windows 10 system
+(it is  very easy,  see our  short blog on  the topic:  ), you  can do
+everything in the same way as if you were doing it under Ubuntu Linux.
+Another  benefit  of this  approach  is  that  you  can also  use  our
+shell-script based solutions on your Windows system.
+
+If you prefer using native Python on your Windows system, this is also
+possible.   In   this  case   you   need   to  install   Python   from
+
+http://www.python.org
+
+and    mysql.connector     available    from
+
+https://dev.mysql.com/downloads/connector/python
+
+Having installed these, the script should work flawlessly from the DOS
+command line or PowerShell.
+
+
+2. OBTAINING DATA
+
+This  script  is for  data  downloaded  from  data feeds  of  WhoisXML
+API. You  may use  it with  any data, including  those from  daily and
+quarterly feeds,  and for all formats,  including "simple", "regular",
+and "full".
+
+Please consult the  manuals of the data feeds regarding  the format of
+the data.
+
+You can  download data  in very  simply by  using our  Python download
+script, load_mysql_data.py.
+
+Our scripts are available on github under
+
+https://github.com/whois-api-llc/whois_database_download_support
+
+
+3. USING THE SCRIPT
+
+The script is self-documenting, please  see the details of its options
+in the output with the --help option:
+
+./load_csvs_to_mysql.py --help
+
+(in DOS command-line, please omit "./")
+
+We elucidate the  use of the script by providing  two simple examples,
+and outline additional functionality in their description.
+
+In all  examples we use Linux/UNIX  style subdirectory specifications,
+that is, the path elements are  separated with "/". On Windows systems
+in DOS  command-line or Powershell,  you should use  backslashes ("\")
+instead.
+
+Example 1.
+----------
+
+We have downloaded data from the daily feed "cctld_discovered_domain_names_whois" into csv files into a local directory
+
+/scratch/whois_data/cctld_discovered_domain_names_whois/
+
+Our files are named *.csv.gz, e.g. 2017_11_12_eu.csv.gz. First we load
+all the csv.gz files in the directory into the database "csvload_test"
+into a newly created table "daily_test".
+
+This can be done with the following command:
+
+./load_csvs_to_mysql.py --mysql-user root --mysql-password MYSQLROOTPASSWORD --mysql-database csvload_test --overwrite-mysql-table --mysql-table daily_test --threads 4 /scratch/whois_data/cctld_discovered_domain_names_whois/*.csv.gz
+
+Some comments and ideas:
+
+- The  script  uses  the  downloaded   csv.gz  and  tar.gz  files.  It
+  uncompresses them first  to a temporary directory  which is "tmpcsv"
+  in  the working  directory  of  the scripts,  but  can be  specified
+  alternatively with the --temp-dir command-line option.
+
+- The data  to be loaded  can be huge.  For instance, if  you download
+  "regular" csv  files for all  gtlds from the quarterly  release, the
+  uncompressed files  will need more  than 14 terabytes. Bear  this in
+  mind not only when specifying  the temporary directory but also when
+  designing  your infrastructure  and estimating  the time  needed for
+  loading data.
+
+- The  script  will first  test  if  all the  csv-s  are  of the  same
+  structure.  This  structure is  deduced from  the file  headers.  It
+  starts manipulating data if and only if it is the case.
+
+- To test if  it is doable without actually making  any changes to the
+  data, just add the --dry-run option
+
+- The script's execution  can be made faster on  multi-core systems by
+  using multiple  threads.  E.g.  for  4 threads, use the  --threads 4
+  option as  in the example. Note:  the uncompression of the  files is
+  one-threaded,  the option  affect the  loading procedure  only. Each
+  thread  processes one  csv  file, so  multithreading  is useful  for
+  multiple csv-s.
+
+- The database will be created if it does not exist.
+
+- If you prefer another MySQL user  than root, you need to ensure that
+  the user has sufficient privileges to do the operations.
+
+- You can add additional data with the same structure, e.g. from newly
+  downloaded csv-s, you just need to use the same command-line without
+  the --overwrite-mysql-table option.
+
+- However,  be careful  when  using --overwrite-mysql-table  : if  the
+  table already exists,  the script will drop it, and  create an empty
+  table again.
+
+Example 2.
+----------
+
+Our data originate now from the  cctld quarterly data feed v6. We have
+downloaded the data for the ".eu" tld into the file
+
+/scratch/whois_data/v6/csv/tlds/simple/csvs.eu.simple.tar.gz
+
+We  will  load these  data  into  the  table "quarterly_test"  of  the
+database "csvload_test". The command is:
+
+./load_csvs_to_mysql.py --mysql-user root --mysql-password MYSQLROOTPASSWORD --mysql-database csvload_test --mysql-table quarterly_test --overwrite-mysql-table /scratch/whois_data/v6/csv/tlds/simple/csvs.eu.simple.tar.gz
+
+
+
+
+
