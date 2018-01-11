@@ -111,42 +111,49 @@ This can be done with the following command:
 
 ./load_csvs_to_mysql.py --mysql-user root --mysql-password MYSQLROOTPASSWORD --mysql-database csvload_test --overwrite-mysql-table --mysql-table daily_test --threads 4 /scratch/whois_data/cctld_discovered_domain_names_whois/*.csv.gz
 
-Some comments and ideas:
+Some important comments and tips:
 
 - The  script  uses  the  downloaded   csv.gz  and  tar.gz  files.  It
   uncompresses them first  to a temporary directory  which is "tmpcsv"
   in  the working  directory  of  the scripts,  but  can be  specified
   alternatively with the --temp-dir command-line option.
 
-- The data  to be loaded  can be huge.  For instance, if  you download
-  "regular" csv  files for all  gtlds from the quarterly  release, the
-  uncompressed files  will need more  than 14 terabytes. Bear  this in
-  mind not only when specifying  the temporary directory but also when
-  designing  your infrastructure  and estimating  the time  needed for
-  loading data.
+- The data  to be loaded can  be huge.  
+
+  For instance, if you download "regular" csv files for all gtlds from
+  the quarterly  release, the uncompressed  files will need  more than
+  1.4 terabytes. Also, the MySQL database  itself will need a space of
+  similar size in addition.
+
+  Bear this in  mind not only when specifying  the temporary directory
+  but also when designing your  infrastructure and estimating the time
+  needed for loading data.
 
 - The  script  will first  test  if  all the  csv-s  are  of the  same
   structure.  This  structure is  deduced from  the file  headers.  It
-  starts manipulating data if and only if it is the case.
+  starts manipulating the database if and only if it is the case.
 
 - To test if  it is doable without actually making  any changes to the
   data, just add the --dry-run option
 
 - The script's execution  can be made faster on  multi-core systems by
-  using multiple  threads.  E.g.  for  4 threads, use the  --threads 4
-  option as  in the example. Note:  the uncompression of the  files is
-  one-threaded,  the option  affect the  loading procedure  only. Each
-  thread  processes one  csv  file, so  multithreading  is useful  for
-  multiple csv-s.
+  using multiple  threads.  
+
+  E.g.   for  4  threads,  use  the  --threads  4  option  as  in  the
+  example. Note: the  uncompression of the files  is one-threaded, the
+  option affect the loading procedure  only. Each thread processes one
+  csv file, so multithreading is useful for multiple csv-s.
 
 - The database will be created if it does not exist.
 
 - If you prefer another MySQL user  than root, you need to ensure that
   the user has sufficient privileges to do the operations.
 
-- You can add additional data with the same structure, e.g. from newly
-  downloaded csv-s, you just need to use the same command-line without
-  the --overwrite-mysql-table option.
+- You can add additional data with the same structure to your existing
+  database.
+
+  E.g. from  newly downloaded  csv-s, you  just need  to use  the same
+  command-line without the --overwrite-mysql-table option.
 
 - However,  be careful  when  using --overwrite-mysql-table  : if  the
   table already exists,  the script will drop it, and  create an empty
