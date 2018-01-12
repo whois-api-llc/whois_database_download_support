@@ -31,18 +31,6 @@ The script is located in the subdirectory
 
 whoisxmlapi_mysql_loaders
 
-In addition, WhoisXML API subscribers can access the scripts from the
-following URLs:
-
-http://domainwhoisdatabase.com/whois_database/sample/gtlds/$ver/mysql_loader_scripts
-http://domainwhoisdatabase.com/whois_database/$ver/docs/mysql_loader_scripts
-
-From the quarterly cctld sample and production URLs, versions from v5 or above:
-
-http://domainwhoisdatabase.com/whois_database/sample/cctlds/$ver/mysql_loader_scripts
-http://domainwhoisdatabase.com/domain_list_quarterly/$ver/docs/mysql_loader_scripts
-
-(Please replace $ver with the appropriate version, e.g. v5 or v20 .)
 
 Contents:
 ---------

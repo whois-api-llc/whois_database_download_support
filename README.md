@@ -33,6 +33,9 @@ whoisxmlapi_mysqldump_loaders:   Python2 and bash scripts to set up a
 				 using the data obtained from
 				 WhoisXML API quarterly data feeds.
 
+whoismxlapi_percona_loaders:    bash scripts for loading binary MySQL
+				dumps of quarterly releases where available
+
 whoisxmlapi_whoisdownload_bash:  a bash script for downloading bulk
 				 data from daily and quarterly WHOIS
 				 data feeds.
