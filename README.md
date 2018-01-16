@@ -2,7 +2,11 @@ These are scripts provided by WhoisXML API, Inc.,
 for clients using WHOIS data feeds to obtain bulk WHOIS data
 or to set up a WHOIS database.
 
-The contents of the subdirectories are:
+The contents of the subdirectories and files are:
+
+UsingScriptsOnWindows10.pdf    : a brief blog describing how to use
+			       	 all features of all our tools on
+				 Windows 10 systems.
 
 whoisxmlapi_bash_csv_to_mysqldb: bash scripts to create and maintain
 				 WHOIS databases in MySQL
