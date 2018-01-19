@@ -1,5 +1,7 @@
 Changes
 ------
+0.0.17:
+  o Added domain_names_whois2 target.
 
 0.0.16:
   o Handling 403: Forbidden errors in wget

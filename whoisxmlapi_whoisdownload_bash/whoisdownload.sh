@@ -11,7 +11,7 @@ LOGIN_PASSWORD=""
 #
 LANG=C
 LC_ALL=C
-VERSION="0.0.16"
+VERSION="0.0.17"
 VERBOSE="no"
 DEBUG="no"
 MYNAME=$(basename $0)
@@ -59,69 +59,74 @@ function printVersionAndExit()
 
 function printHelpAndExit()
 {
-    echo "Usage: $MYNAME [OPTION]..."
-    echo "$MYNAME Downloads information for registered domains."
-    echo ""
-echo " -h, --help            Print this help and exit."
-echo " -v, --version         Print version information and exit."
-echo " --verbose             Print more messages."
-echo " --data-feeds=FEEDS    One or more data feeds to download."
-echo " --tld=TLD             One or more top level domains to download."
-echo " --tld-file=FILENAME   Load the list of TLDs from a text file."
-echo " --user=USERNAME       User name to login to the data source."
-echo " --password=PASSWORD   Password to login to the data source."
-echo " --output-dir=PATH     The output directory."
-echo " --file-format=FORMAT  Choose the given file format where available."
-echo " --db-version=STRING   Set the version to download. Required for quarterly feeds. Format: vNN, e.g. v19"
-echo " --n=INTEGER           Sets how many days to download."
-echo " --date=YYYY-MM-dd     The date of the files to check. All the date format"
-echo "                       formats that the date(1) utility accepts are supported."
-    echo ""
-    echo "Examples:"
-    echo "$MYNAME --user=demo --password=xxxxxxx --date=2015_11_16 --tld=com --output-dir=./tmp --data-feeds=domain_names_whois --file-format=sql"
-    echo ""
-    echo "$MYNAME --user=demo --password=xxxxxxx --output-dir=./tmp --date=\"2015-10-20\" --date=\"2015-10-21\" --tld=\"org info\" --data-feeds=\"domain_names_new domain_names_dropped\""
+    cat <<EOF
+    Usage: $MYNAME [OPTION]...
+    $MYNAME Downloads information for registered domains.
 
-    echo ""
-    echo "Supported data feeds:"
-    echo "  o domain_names_new "
-    echo "  o domain_names_dropped "
-    echo "  o domain_names_dropped_whois "
-    echo "  o domain_names_whois "
-    echo "  o domain_names_whois_filtered_reg_country "
-    echo "  o domain_names_whois_filtered_reg_country_noproxy "
-    echo "  o domain_names_whois_archive "
-    echo "  o domain_names_whois_filtered_reg_country_archive "
-    echo "  o domain_names_whois_filtered_reg_country_noproxy_archive"
-    echo "  o whois_record_delta_whois"
-    echo "  o whois_record_delta_domain_names_change"
-    echo "  o ngtlds_domain_names_new"
-    echo "  o ngtlds_domain_names_dropped"
-    echo "  o ngtlds_domain_names_dropped_whois "
-    echo "  o ngtlds_domain_names_whois"
-    echo "  o ngtlds_domain_names_whois_filtered_reg_country "
-    echo "  o ngtlds_domain_names_whois_filtered_reg_country_noproxy "
-    echo "  o ngtlds_domain_names_whois_archive"
-    echo "  o ngtlds_domain_names_whois_filtered_reg_country_archive "
-    echo "  o ngtlds_domain_names_whois_filtered_reg_country_noproxy_archive "
-    echo "  o cctld_discovered_domain_names_new"
-    echo "  o cctld_discovered_domain_names_whois"
-    echo "  o cctld_registered_domain_names_new"
-    echo "  o cctld_registered_domain_names_whois"
-    echo "  o cctld_registered_domain_names_dropped"
-    echo "  o cctld_registered_domain_names_dropped_whois"
-    echo "  o whois_database"
-    echo "  o whois_database_combined"
-    echo "  o domain_list_quarterly"
-    echo ""
-    echo "The following file formats are available:"
-    echo "  o regular or regular_csv"
-    echo "  o simple or simple_csv"
-    echo "  o full or full_csv"
-    echo "  o sql or mysqldump"
-    echo "  o all"
-    echo ""
-    echo ""
+     -h, --help            Print this help and exit.
+     -v, --version         Print version information and exit.
+     --verbose             Print more messages.
+     --data-feeds=FEEDS    One or more data feeds to download.
+     --tld=TLD             One or more top level domains to download.
+     --tld-file=FILENAME   Load the list of TLDs from a text file.
+     --user=USERNAME       User name to login to the data source.
+     --password=PASSWORD   Password to login to the data source.
+     --output-dir=PATH     The output directory.
+     --file-format=FORMAT  Choose the given file format where available.
+     --db-version=STRING   Set the version to download. 
+                           Required for quarterly feeds. Format: vNN, e.g. v19
+     --n=INTEGER           Sets how many days to download.
+     --date=YYYY-MM-dd     The date of the files to check. All the date format
+                           formats that the date(1) utility accepts are 
+                           supported.
+
+    Examples:
+    $MYNAME --user=demo --password=xxxxxxx --date=2015_11_16 --tld=com --output-dir=./tmp --data-feeds=domain_names_whois --file-format=sql
+
+    $MYNAME --user=demo --password=xxxxxxx --output-dir=./tmp --date=2015-10-20 --date=2015-10-21 --tld="org info" --data-feeds="domain_names_new domain_names_dropped"
+
+    Supported data feeds:
+      o domain_names_new
+      o domain_names_dropped
+      o domain_names_dropped_whois
+      o domain_names_whois
+      o domain_names_whois_filtered_reg_country
+      o domain_names_whois_filtered_reg_country_noproxy
+      o domain_names_whois_archive
+      o domain_names_whois_filtered_reg_country_archive
+      o domain_names_whois_filtered_reg_country_noproxy_archive
+      o whois_record_delta_whois
+      o whois_record_delta_domain_names_change
+      o ngtlds_domain_names_new
+      o ngtlds_domain_names_dropped
+      o ngtlds_domain_names_dropped_whois
+      o ngtlds_domain_names_whois
+      o ngtlds_domain_names_whois_filtered_reg_country
+      o ngtlds_domain_names_whois_filtered_reg_country_noproxy
+      o ngtlds_domain_names_whois_archive
+      o ngtlds_domain_names_whois_filtered_reg_country_archive
+      o ngtlds_domain_names_whois_filtered_reg_country_noproxy_archive
+      o domain_names_whois2
+      o cctld_discovered_domain_names_new
+      o cctld_discovered_domain_names_whois
+      o cctld_registered_domain_names_new
+      o cctld_registered_domain_names_whois
+      o cctld_registered_domain_names_dropped
+      o cctld_registered_domain_names_dropped_whois
+      o whois_database
+      o whois_database_combined
+      o domain_list_quarterly
+    
+    The following file formats are available:
+      o regular or regular_csv
+      o simple or simple_csv
+      o full or full_csv
+      o sql or mysqldump
+      o all
+
+
+EOF
+
     exit 1
 }
 
@@ -548,6 +553,8 @@ function supportedTldsThird()
     else
         # other 
         # http://bestwhois.org/domain_name_data/domain_names_whois/status/supported_tlds
+        # FIXME: domain_names_whois2 has no supported_tlds, so we use this for
+        # domain_names_whois2 too.
         baseUrl="http://bestwhois.org"
         dirname="domain_name_data/domain_names_whois/status"
         filename="supported_tlds"
@@ -624,7 +631,8 @@ function data_feed_parent_dir()
          "$feed" == "domain_names_whois_filtered_reg_country_archive" -o \
          "$feed" == "domain_names_whois_filtered_reg_country_noproxy_archive" -o \
          "$feed" == "whois_record_delta_whois" -o \
-         "$feed" == "whois_record_delta_domain_names_change" ]; then 
+         "$feed" == "whois_record_delta_domain_names_change" -o \
+         "$feed" == "domain_names_whois2" ]; then
         echo "domain_name_data/$feed"
     elif [ "$feed" == "ngtlds_domain_names_new" -o \
         "$feed" == "ngtlds_domain_names_dropped" -o \
@@ -864,6 +872,7 @@ function allFeeds()
         ngtlds_domain_names_dropped \
         ngtlds_domain_names_dropped_whois \
         ngtlds_domain_names_whois \
+        domain_names_whois2 \
         cctld_discovered_domain_names_new \
         cctld_discovered_domain_names_whois \
         whois_record_delta_whois \
@@ -932,6 +941,17 @@ function filePath()
         echo "domain_name_data/$feed/filtered_reg_country_${date_underscore}_${tld}.tar.gz"
     elif [ "$feed" == "domain_names_whois_filtered_reg_country_noproxy_archive" ]; then
         echo "domain_name_data/$feed/filtered_reg_country_noproxy_${date_underscore}_${tld}.tar.gz"
+    elif [ "$feed" == "domain_names_whois2" ]; then 
+        #
+        # This one supports various file formats, some others not.
+        #
+        if [ "$FILEFORMAT" = "regular" -o "$FILEFORMAT" = "regular_csv" ]; then
+            echo "domain_name_data/$feed/${date_underscore}_${tld}.csv.gz"
+        elif [ "$FILEFORMAT" = "full" -o "$FILEFORMAT" = "full_o" ]; then
+            echo "domain_name_data/$feed/full_${date_underscore}_${tld}.csv.gz"
+        elif [ "$FILEFORMAT" = "sql" -o "$FILEFORMAT" = "mysqldump" ]; then
+            echo "domain_name_data/$feed/add_mysqldump_${date_underscore}/${tld}/add_mysqldump_${date_underscore}_${tld}.sql.gz"
+        fi
     elif [ "$feed" == "whois_record_delta_whois" ]; then
         #
         # Again, various formats.
@@ -1379,6 +1399,7 @@ function downloadForTld()
             "${feed}" == "ngtlds_domain_names_dropped_whois" -o \
             "${feed}" == "ngtlds_domain_names_whois" -o \
             "${feed}" == "ngtlds_domain_names_whois_archive" -o \
+            "${feed}" == "domain_names_whois2" -o \
             "${feed}" == "cctld_discovered_domain_names_whois" -o \
             "${feed}" == "cctld_registered_domain_names_whois" -o \
             "${feed}" == "cctld_registered_domain_names_dropped_whois" -o \
