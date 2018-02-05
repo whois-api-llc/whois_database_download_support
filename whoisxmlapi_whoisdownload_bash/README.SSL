@@ -1,0 +1,84 @@
+Setting up SSL authentication to use with whoisdownload.sh
+
+install_p12pack.sh
+
+Provided by WhoisXML API, Inc.
+
+dated: 2018-02-01
+
+CONTENTS:
+---------
+
+1. Brief summary
+
+2. Installing the auth credentials
+
+3. Using the script
+
+
+1. Brief summary
+----------------
+
+The goal is to set up your authentication credentials so that you can
+use whoisdownload.sh with the option --auth-type=ssl instead of
+password authentication.
+
+2. Installing the auth credentials
+----------------------------------
+
+As a starting point we assume that you have obtained a p12 pack with
+certificates and keys, and a password for this file from WhoisXML API,
+Inc. (If it is not the case, you will not be able to use this script.)
+
+Let us call the obtained file pack.p12, and the password in the
+examples will be "YourPassword".
+
+You need to do the following just once:
+
+-Put pack.p12 into the directory where the download scripts (and this
+ file) reside.
+
+-Make sure you have openssl installed. If you do not have it, install
+ it (e.g. apt-get install openssl on Debian-favor systems (Ubuntu,
+ Mint, Ubuntu on Windwos.)
+
+-Run the following command in the directory:
+
+     ./install_p12pack.sh pack.p12 YourPassword
+
+ which gives the following output:
+
+  MAC verified OK
+  MAC verified OK
+  MAC verified OK
+  writing RSA key
+  All done. Now you can use the downloader script in this directory.
+
+  Also, it will generate the files client.crt, client.key and whoisxmlapi.ca
+  needed for the authentication. These will be only readable by you.
+
+  IMPORTANT: keep the generated client.key confidential.
+
+If once this is done, you will be able to use the script 
+
+3. Using the script
+-------------------
+
+To use ssl authentication instead of password authentication, add
+
+--auth-type=ssl
+
+to the options of the script when you use it. You will not need the
+--user and --password options then.
+
+The default location of the files client.crt, client.key and
+whoisxmlapi.ca is the same directory as your script. You may move
+these files elsewhere, and specify their location with the respective
+options, e.g.
+
+--cacert=/home/myuser/mycustomdir/whoisxmlapi.ca
+--sslcert=/home/myuser/mycustomdir/client.crt
+--sslkey=/home/myuser/mycustomdir/client.key
+
+You may also rename these files and specify them with their new names
+using the above options.

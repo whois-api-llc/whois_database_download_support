@@ -1,5 +1,8 @@
 Changes
 ------
+0.0.18.
+  o Added support for ssl key authentication.
+
 0.0.17:
   o Added domain_names_whois2 target.
 
@@ -75,6 +78,16 @@ Changes
   o Some data sources dropped some older dates I used in tests so I had to
     modify my tests and re-run them.
 
+SSL authentication setup
+------------------------
+Consult README.SSL on how to set up ssl authentication if you have
+obtained the required files from WhoisXML API, INC.
+
+If you have set up ssl authentication, you can use the
+
+--auth-type=ssl
+
+instead of the --user and --password options in the examples below.
 
 Examples
 --------
@@ -85,35 +98,35 @@ one specific date.
     ./whoisdownload.sh \
         --user=demo \
         --password=XXXXXX \
-        --date=2015-08-29 \
+        --date=2018-01-10 \
         --output-dir=./tmp  \
         --data-feeds=domain_names_new
 
 
 Example 2
 Download the ngtlds_domain_names_new for three consecutive days for the
-airforce and actor domains.
+abc and actor domains.
 
     ./whoisdownload.sh \
         --user=demo \
         --password=XXXXXX \
-        --tld="airforce actor" \
-        --date=2015-09-16 \
+        --tld="abc actor" \
+        --date=2018-01-10 \
         --n=3 \
         --output-dir=./tmp  \
         --data-feeds=ngtlds_domain_names_new
 
 
 Example 3
-Downloading the domain_names_new data source of .mobi domain for 14 days
+Downloading the domain_names_new data source of .aero domain for 14 days
 starting at a specific date.
 
     ./whoisdownload.sh \
         --user=demo \
         --password=XXXXXX \
-        --date=2015-08-29 \
+        --date=2018-01-10 \
         --output-dir=./tmp  \
-        --tld=mobi \
+        --tld=aero \
         --n=14 \
         --data-feeds=domain_names_new
 
@@ -125,86 +138,80 @@ specific date.
     ./whoisdownload.sh \
         --user=demo \
         --password=XXXXXX \
-        --date=2015-08-29 \
+        --date=2018-01-10 \
         --output-dir=./tmp  \
         --data-feeds=domain_names_whois
 
 
 Example 5
-Downloading files for two datasources, two domains and two dates, six
+Downloading files for two data sources, two domains and two dates, six
 downloads altogether.
 
     ./whoisdownload.sh \
         --user=demo \
         --password=XXXXXX \
         --output-dir=./tmp  \
-        --date="2015-10-20 2015-10-21" \
+        --date="2018-01-20 2018-02-10" \
         --tld="org info" \
         --data-feeds="domain_names_new domain_names_dropped"
 
 
 Example 6
-Download the v13 version of the whois_database for one date and one tld.
+
+Download the v20 version of the whois_database for one tld (The date
+argument is required but ignored.)
 
     ./whoisdownload.sh \
         --verbose \
         --user=demo \
         --password=XXXXXX \
         --file-format=simple \
-        --db-version=v13 \
-        --date=2015-08-21 \
+        --db-version=v20 \
+        --date=2018-01-01 \
         --tld=tel \
         --output-dir=./tmp \
         --data-feeds=whois_database
 
 
 Example 7
-Downloading the whois_database data source in MySQL dump data format for a
-given date and top level domain.
+Download the v19 version of the whois_database for for all tlds.
+(The date argument is required but ignored.)
 
-    ./whoisdownload.sh \
-        --user=demo \
-        --password=XXXXXX \
-        --file-format=sql \
-        --date=2015-08-19 \
-        --tld=tel \
-        --output-dir=./tmp  \
-        --data-feeds=whois_database
-
-
-Example 8
-Download the v13 version of the whois_database for for all tld.
-
-    ./whoisdownload.sh \
+./whoisdownload.sh \
         --verbose \
         --user=demo \
         --password=XXXXXX \
         --file-format=simple \
-        --db-version=v13 \
+        --db-version=v19 \
+	--date=2018-01-01 \	
         --output-dir=./tmp \
         --data-feeds=whois_database
 
-Example 9
-Download the v3 version of the whois_database for for all tld.
+Example 8
+Download the v6 version of the cctld whois_database for for all tlds.
+(The date argument is required but ignored.)
 
     ./whoisdownload.sh \
         --verbose \
         --user=demo \
         --password=XXXXXXX \
         --file-format=simple \
-        --db-version=v3 \
+	--date=2018-01-01 \
+        --db-version=v6 \
         --output-dir=./tmp \
         --data-feeds=domain_list_quarterly
 
-Example 10
-Download the v3 version of the whois_database for for one tld.
+Example 9
+Download the v6 version of the cctld whois_database for for one tld.
+(The date argument is required but ignored.)
 
     ./whoisdownload.sh \
         --verbose \
         --user=demo \
         --password=XXXXXX \
         --file-format=simple \
-        --db-version=v3 \
+	--date=2018-01-01 \
+        --db-version=v6 \
         --tld=uk
         --output-dir=./tmp \
         --data-feeds=domain_list_quarterly

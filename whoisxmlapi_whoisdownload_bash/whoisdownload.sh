@@ -11,7 +11,7 @@ LOGIN_PASSWORD=""
 #
 LANG=C
 LC_ALL=C
-VERSION="0.0.17"
+VERSION="0.0.18"
 VERBOSE="no"
 DEBUG="no"
 MYNAME=$(basename $0)
@@ -26,7 +26,14 @@ DRY_RUN_MULTIFILE_LIMIT=10
 FILEFORMAT="regular"
 #note: database version has to be specified explicitly
 DATABASEVERSION="UNSPECIFIED"
-START_DIRECTORY=$PWD1
+START_DIRECTORY=$PWD
+#default authentication type
+AUTHTYPE="password"
+#default files for ssl auth
+SCRIPT_DIRECTORY=$(realpath $(dirname "${BASH_SOURCE[0]}"))
+CACERTFILE="$SCRIPT_DIRECTORY/whoisxmlapi.ca"
+CERTFILE="$SCRIPT_DIRECTORY/client.crt"
+KEYFILE="$SCRIPT_DIRECTORY/client.key"
 PRINT_URLS=""
 PRINT_FEEDS=""
 PRINT_FORMATS=""
@@ -63,14 +70,24 @@ function printHelpAndExit()
     Usage: $MYNAME [OPTION]...
     $MYNAME Downloads information for registered domains.
 
+    Note: to use ssl auth, you have to set up the keys, see the file README.SSL
+
      -h, --help            Print this help and exit.
      -v, --version         Print version information and exit.
      --verbose             Print more messages.
      --data-feeds=FEEDS    One or more data feeds to download.
      --tld=TLD             One or more top level domains to download.
      --tld-file=FILENAME   Load the list of TLDs from a text file.
+     --auth-type=AUTHTYPE  Authentication type. Can be "password" or "ssl".
+                           Defaults to "password".
      --user=USERNAME       User name to login to the data source.
      --password=PASSWORD   Password to login to the data source.
+     --cacert=CACERTFILE   The CA cert file for ssl authentication.
+                           Defaults to whoisxmlapi.ca next to the script.
+     --sslcert=CERTFILE    User's cert file for ssl authentication.
+                           Defaults to client.crt next to the script.
+     --sslkey=KEYFILE      User's key file for ssl authentication.
+                           Defaults to client.key next to the script.
      --output-dir=PATH     The output directory.
      --file-format=FORMAT  Choose the given file format where available.
      --db-version=STRING   Set the version to download. 
@@ -81,9 +98,9 @@ function printHelpAndExit()
                            supported.
 
     Examples:
-    $MYNAME --user=demo --password=xxxxxxx --date=2015_11_16 --tld=com --output-dir=./tmp --data-feeds=domain_names_whois --file-format=sql
+    $MYNAME --user=demo --password=xxxxxxx --date=2018_01_16 --tld=com --output-dir=./tmp --data-feeds=domain_names_whois --file-format=sql
 
-    $MYNAME --user=demo --password=xxxxxxx --output-dir=./tmp --date=2015-10-20 --date=2015-10-21 --tld="org info" --data-feeds="domain_names_new domain_names_dropped"
+    $MYNAME --user=demo --password=xxxxxxx --output-dir=./tmp --date=2015-10-20 --date=2018-01-21 --tld="org info" --data-feeds="domain_names_new domain_names_dropped"
 
     Supported data feeds:
       o domain_names_new
@@ -170,7 +187,8 @@ function printDebug()
 
 ARGS=$(\
     getopt -o hv \
-        -l "help,verbose,version,user:,password:,tld:,date:,output-dir:,\
+        -l "help,verbose,version,auth-type:,user:,password:,\
+cacert:,sslcert:,sslkey:,tld:,date:,output-dir:,\
 data-feeds:,file-format:,tld-file:,db-version:,n:,dry,\
 print-feeds,print-urls,print-formats" \
         -- "$@")
@@ -209,6 +227,37 @@ while true; do
             LOGIN_PASSWORD=$1
             shift
             ;;
+
+	--auth-type)
+	    shift
+	    if [ $1 == "ssl" ];then
+		AUTHTYPE="ssl"
+	    elif [ $1 == "password" ];then
+		AUTHTYPE="password"
+	    else
+		printError "Invalid auth type: $1. Should be password or ssl."
+		exit 6
+	    fi
+	    shift
+	    ;;
+
+	--cacert)
+	    shift
+	    CACERT=$1
+	    shift
+	    ;;
+
+	--sslcert)
+	    shift
+	    SSLCERT=$1
+	    shift
+	    ;;
+
+	--sslkey)
+	    shift
+	    KEYFILE=$1
+	    shift
+	    ;;
 
         --data-feeds)
             shift
@@ -330,63 +379,63 @@ while true; do
 done
 
 #Conditions to meet when all args are known
+
+#Authentication method setup
+if [ $AUTHTYPE == "password" ];then
+    if [[ ! -z "$LOGIN_NAME" ]];then
+	WGET_AUTH_ARGS_B="--user=$LOGIN_NAME --password=$LOGIN_PASSWORD"
+	WGET_AUTH_ARGS_D="--user=$LOGIN_NAME --password=$LOGIN_PASSWORD"
+    else
+	WGET_AUTH_ARGS_B="--user=$BESTWHOIS_USER --password=$BESTWHOIS_PASSWORD"
+	WGET_AUTH_ARGS_D="--user=$WHOISDATABASE_USER --password=$WHOISDATABASE_PASSWORD"
+    fi
+    URLHEAD_B="http://bestwhois.org"
+    URLHEAD_D="http://www.domainwhoisdatabase.com"
+fi
+if [ $AUTHTYPE == "ssl" ];then
+    if [[ ! -f  $CACERTFILE ]];then
+	printError "CA cert file $CACERTFILE does not exist."
+	exit 6
+    fi;
+    if [[ ! -f  $CERTFILE ]];then
+	printError "User cert file $CERTFILE does not exist."
+	exit 6
+    fi;
+    if [[ ! -f  $KEYFILE ]];then
+	printError "SSL key file $KEYFILE does not exist."
+	exit 6
+    fi;
+    WGET_AUTH_ARGS_B="--ca-certificate=$CACERTFILE --certificate=$CERTFILE --private-key=$KEYFILE"
+    WGET_AUTH_ARGS_D="--ca-certificate=$CACERTFILE --certificate=$CERTFILE --private-key=$KEYFILE"
+    URLHEAD_B="https://direct.bestwhois.org"
+    URLHEAD_D="https://direct.domainwhoisdatabase.com"
+fi
+
+printVerbose "Base URLS: $URLHEAD_B, $URLHEAD_D"
 #If downloading quarterlies, the database version should be specified
 if echo $FEEDS | grep --quiet -e "whois_database\|domain_list_quarterly" && [ $DATABASEVERSION = "UNSPECIFIED" ]; then
     printError "The specified feed needs an explicit database version specification such as --db-version=vNN"
     exit 1
 fi
-    
+
+
+# $1: the base url for which we need the auth args
 #
-# $1: the base url for which we need the password
-# 
-# This function prints the login name for authention. The login name can come
-# from the command line or from the configuration file.
+# This function prints the authentication args for wget
 #
-function login_name()
+function wget_auth_args()
 {
     local base_url="$1"
 
-    if [ "$LOGIN_NAME" ]; then
-        echo "$LOGIN_NAME"
-        return 0
-    fi
-
-    if [ "$base_url" == "http://bestwhois.org" ]; then
-        echo "$BESTWHOIS_USER"
-        return 0
-    elif [ "$base_url" == "http://www.domainwhoisdatabase.com" ]; then
-        echo "$WHOISDATABASE_USER"
-        return 0
+    if echo $base_url | grep -q -e "^$URLHEAD_B";then
+	echo $WGET_AUTH_ARGS_B
+	return 0
+    elif echo $base_url | grep -q -e "^$URLHEAD_D";then
+	echo $WGET_AUTH_ARGS_D
+	return 0
     else
-        printError "Base URL '$base_url' not supported."
-        return 1
-    fi
-}
-
-
-#
-# $1: the base url for which we need the password
-#
-# This function prints the password for authention. The password can come from
-# the command line or from the configuration file.
-#
-function login_password()
-{
-    local base_url="$1"
-
-    if [ "$LOGIN_PASSWORD" ]; then
-        echo "$LOGIN_PASSWORD"
-    fi
-    
-    if [ "$base_url" == "http://bestwhois.org" ]; then
-        echo "$BESTWHOIS_PASSWORD"
-        return 0
-    elif [ "$base_url" == "http://www.domainwhoisdatabase.com" ]; then
-        echo "$WHOISDATABASE_PASSWORD"
-        return 0
-    else
-        printError "Base URL '$base_url' not supported."
-        return 1
+	printError "Base URL '$base_url' not supported."
+	return 1
     fi
 }
 
@@ -412,8 +461,7 @@ function downloadSupportedTlds()
     fi
    
     wget \
-        --user="$(login_name $baseUrl)" \
-        --password="$(login_password $baseUrl)" \
+        $(wget_auth_args $baseUrl) \
         $fullurl 2>wget.log >wget.log
     
     if grep --quiet "404 Not Found" wget.log; then
@@ -423,6 +471,11 @@ function downloadSupportedTlds()
         return 1
     elif grep --quiet "Password Authentication Failed" wget.log; then
         printError "[AUTH FAILED]"
+        rm -f wget.log
+        popd >/dev/null
+        return 1
+    elif grep --quiet "OpenSSL: error" wget.log; then
+        printError "[OPENSSL ERROR]"
         rm -f wget.log
         popd >/dev/null
         return 1
@@ -445,7 +498,7 @@ function cctldDailyDiscoveredSupportedTldsForDate()
 {
     local feed=$1
     local date=$2
-    local baseUrl="http://www.domainwhoisdatabase.com"
+    local baseUrl="$URLHEAD_D"
     local dirname="$(data_feed_parent_dir $feed)/status"
     local filename="supported_tlds_${date}"
 
@@ -459,7 +512,7 @@ function cctldDailyDiscoveredSupportedTldsForDate()
 function cctldDailyDiscoveredSupportedTlds()
 {
     local feed=$1
-    local baseUrl="http://www.domainwhoisdatabase.com"
+    local baseUrl="$URLHEAD_D"
     local dirname="$(data_feed_parent_dir "$feed")/status"
     local filename="supported_tlds"
 
@@ -484,7 +537,7 @@ function cctldDailyDiscoveredSupportedTlds()
 function bestWhoisSupportedTlds()
 {
     local feed=$1
-    local baseUrl="http://bestwhois.org"
+    local baseUrl="$URLHEAD_B"
     local dirname="$(data_feed_parent_dir "$feed")/status"
     local filename="supported_tlds"
 
@@ -510,7 +563,7 @@ function bestWhoisSupportedTldsForDate()
 {
     local feed=$1
     local date=$2
-    local baseUrl="http://bestwhois.org"
+    local baseUrl="$URLHEAD_B"
     local dirname="$(data_feed_parent_dir $feed)/status"
     local filename="supported_tlds_${date}"
 
@@ -547,7 +600,7 @@ function supportedTldsThird()
         # http://bestwhois.org/ngtlds_domain_name_data/domain_names_whois/
         # status/supported_tlds_$YYYY_mm_dd
         #
-        baseUrl="http://bestwhois.org"
+        baseUrl="$URLHEAD_B"
         dirname="ngtlds_domain_name_data/domain_names_whois/status"
         filename="supported_tlds_$date_underscore"
     else
@@ -555,7 +608,7 @@ function supportedTldsThird()
         # http://bestwhois.org/domain_name_data/domain_names_whois/status/supported_tlds
         # FIXME: domain_names_whois2 has no supported_tlds, so we use this for
         # domain_names_whois2 too.
-        baseUrl="http://bestwhois.org"
+        baseUrl="$URLHEAD_B"
         dirname="domain_name_data/domain_names_whois/status"
         filename="supported_tlds"
     fi
@@ -570,7 +623,7 @@ function supportedTldsThird()
 function supportedTldsFourth()
 {
     local feed=$1
-    local baseUrl="http://bestwhois.org"
+    local baseUrl="$URLHEAD_B"
     local dirname="$(data_feed_parent_dir $feed)"
     local filename="supported_tlds"
 
@@ -666,7 +719,7 @@ function data_feed_parent_dir()
 #
 function domainwhoisdatabaseSupportedTlds()
 {
-    local baseUrl="http://www.domainwhoisdatabase.com"
+    local baseUrl="$URLHEAD_D"
     local dirname="whois_database/$DATABASEVERSION/docs"
     local filename="${DATABASEVERSION}.tlds"
 
@@ -683,7 +736,7 @@ function domainwhoisdatabaseSupportedTlds()
 #
 function domain_list_quarterly_SupportedTlds()
 {
-    local baseUrl="http://www.domainwhoisdatabase.com"
+    local baseUrl="$URLHEAD_D"
     local dirname="domain_list_quarterly/$DATABASEVERSION/docs"
     local filename="${DATABASEVERSION}.tlds"
 
@@ -1084,15 +1137,15 @@ function baseUrl()
     local feed=$1
     
     if [ "$feed" == "whois_database" -o "$feed" == "domain_list_quarterly" ]; then
-        echo "http://www.domainwhoisdatabase.com"
+        echo "$URLHEAD_D"
     elif [ "$feed" == "whois_database_combined" ]; then
         # http://www.domainwhoisdatabase.com/whois_database/v14/database_dump/
-        echo "http://www.domainwhoisdatabase.com"
+        echo "$URLHEAD_D"
     elif [ "$feed" == "cctld_discovered_domain_names_new" -o \
         "${feed}" == "cctld_discovered_domain_names_whois" ]; then
-        echo "http://www.domainwhoisdatabase.com"
+        echo "$URLHEAD_D"
     else
-        echo "http://bestwhois.org"
+        echo "$URLHEAD_B"
     fi
 }
 
@@ -1135,8 +1188,7 @@ function downloadWithWget()
 
     pushd $dirname >/dev/null
     wget \
-        --user="$(login_name $baseUrl)" \
-        --password="$(login_password $baseUrl)" \
+        $(wget_auth_args $baseUrl) \
         "$baseUrl/$dirname/$filename" 2>wget.log >wget.log
 
     retcode=$?
@@ -1153,6 +1205,9 @@ function downloadWithWget()
     elif grep --quiet "Password Authentication Failed" wget.log; then
         echo "[AUTH FAILED]"
         retcode=2
+    elif grep --quiet "OpenSSL: error" wget.log; then
+        printError "[OPENSSL ERROR]"
+	retcode=2
     elif grep --quiet "403 Forbidden" wget.log; then
         echo "[NONEXISTENT OR UNAVAILABLE RESOURCE]"
         retcode=3	
@@ -1292,8 +1347,9 @@ function downloadOneFile()
     local url=$(baseUrl "$feed")
     local fullurl=$url/$file
 
+    printDebug "*** feed      : $feed"
     printDebug "*** file      : $file"
-
+    printDebug "*** url      : $url"
     #
     # If filename is empty the given combination does not exist. This should of
     # course never happen.
@@ -1329,14 +1385,15 @@ function downloadOneFile()
     pushd $dirname >/dev/null
 
     wget \
-        --user="$(login_name $url)" \
-        --password="$(login_password $url)" \
+        $(wget_auth_args $url) \
         $fullurl 2>wget.log >wget.log
 
     if grep --quiet "404 Not Found" wget.log; then
         echo "[NOT FOUND]"
     elif grep --quiet "Password Authentication Failed" wget.log; then
         echo "[AUTH FAILED]"
+    elif grep --quiet "OpenSSL: error" wget.log; then
+        echo "[OPENSSL ERROR]"
     elif grep --quiet "403 Forbidden" wget.log; then
         echo "[NONEXISTENT OR UNAVAILABLE RESOURCE]"
     else
