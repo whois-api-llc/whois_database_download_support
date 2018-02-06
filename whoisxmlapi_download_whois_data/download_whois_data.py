@@ -28,6 +28,7 @@ from whois_utils.whois_user_interaction import *
 VERSION = "0.0.4"
 MYNAME = sys.argv[0].replace('./','')
 FEEDCONFIGDIR='.'
+MYDIR=os.path.abspath(os.path.dirname(sys.argv[0]))
 
 #Read the list of supported formats. Probably the directory with "feeds.ini" should be given more precisely.
 formatmatrix = wdf.feed_format_matrix(FEEDCONFIGDIR)
@@ -49,6 +50,10 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
     parser.add_argument('--interactive', help='Interactive mode. \nIf proivded as a first argument, \nyou will be prompted for the parameters in GUI dialogue windows.')
     parser.add_argument('--username', help='Username for the feed.')
     parser.add_argument('--password', help='Password for the feed.')
+    parser.add_argument('--sslauth', help='Enable ssl authentication instead of the default password authentication.', action='store_true')
+    parser.add_argument('--cacertfile', help='Location of the CA certificate for ssl auth.\n Defaults to whoisxmlapi.ca next to the script.', default = MYDIR+'/whoisxmlapi.ca')
+    parser.add_argument('--crtfile', help='Location of the cert file for ssl auth.\n Defaults to client.crt next to the script.', default = MYDIR+'/client.crt')
+    parser.add_argument('--keyfile', help='Location of the key file for ssl auth.\n Defaults to client.key next to the script.', default = MYDIR+'/client.key')
     parser.add_argument('--list-feeds', help='List supported feeds. Other arguments are ignored', action='store_true')
     parser.add_argument('--feed', help='Use this feed')
     parser.add_argument('--list-dataformats', help='List the data formats supported by the feed', action='store_true')
@@ -130,10 +135,13 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
             f.set_daily_feed_interval(startdate, enddate)
     #setup login credentials
     for the_feed in feeds:
-        if args['username'] != None and args['password'] != None:
-            the_feed.set_login_credentials(args['username'], args['password'])
+        if args['sslauth']:
+            the_feed.set_login_credentials('ssl', cacertfile = args['cacertfile'], keyfile = args['keyfile'], crtfile = args['crtfile'])
         else:
-            the_feed.set_login_credentials('', '')
+            if args['username'] != None and args['password'] != None:
+                the_feed.set_login_credentials('password', login=args['username'], password=args['password'])
+            else:
+                the_feed.set_login_credentials('password')
     the_feed.test_http_access()
     if not the_feed.loginOK:
         print_error_and_exit('Login failed. Probably bad username or password specified in the command-line or in ~/.whoisxmlapi_login.ini')
@@ -180,6 +188,9 @@ else:
     whois_user_interaction.DIALOG_COMMUNICATION = True
     #Things you cannot do when interactive
     #Note: set the next two to True for console debug
+    args['cacertfile'] = MYDIR+'/whoisxmlapi.ca'
+    args['crtfile'] = MYDIR+'/client.crt'
+    args['keyfile'] = MYDIR+'/client.key'
     args['verbose'] = True
     args['debug'] = False
     #Default window title
@@ -255,29 +266,44 @@ else:
         print_verbose('Start date: %s\nEnd date: %s' % (str(startdate), str(enddate)))
         for f in feeds:
             f.set_daily_feed_interval(startdate, enddate)
-                
-    #Get and verify user acces credentials for the feed
+
+    #Check if the ssl key file exists and decide upon auth type
+    if os.path.isfile(args['keyfile']) and \
+       os.path.isfile(args['crtfile']) and \
+       os.path.isfile(args['cacertfile']):
+        answer = g.ynbox('SSL auth config detected.\nDo you want to use ssl auth?\n(If not, we go for password auth.', windowtitle)
+    if answer:
+        args['sslauth']=True
+    else:
+        args['sslauth']=False
+        #Get and verify user acces credentials for the feed
     defaultusername=''
     while not the_feed.loginOK:
-        answer = g.enterbox('Enter your username for the chosen WhoisXML API feed.\nLeave it empty if you have configured ~/.whoisxmlapi_login.ini', windowtitle,default = defaultusername)
-        if answer == None:
-            exit(6)
-        args['username'] = answer
-        defaultusername = answer
-        if answer.strip() != '':
-            answer = g.passwordbox('Enter your password for the user %s' % (args['username'],), windowtitle)
+        if args['sslauth']:
+            the_feed.set_login_credentials('ssl')
+        else:
+            answer = g.enterbox('Enter your username for the chosen WhoisXML API feed.\nLeave it empty if you have configured ~/.whoisxmlapi_login.ini', windowtitle,default = defaultusername)
             if answer == None:
                 exit(6)
-        #If the username is an empty string, the password will be also one.
-        args['password'] = answer
-        the_feed.set_login_credentials(args['username'], args['password'])
+            args['username'] = answer
+            defaultusername = answer
+            if answer.strip() != '':
+                answer = g.passwordbox('Enter your password for the user %s' % (args['username'],), windowtitle)
+                if answer == None:
+                    exit(6)
+            #If the username is an empty string, the password will be also one.
+            args['password'] = answer
+            the_feed.set_login_credentials('password', login=args['username'], password=args['password'])            
         the_feed.test_http_access()
         if not the_feed.loginOK:
-            answer = g.ynbox('Login failed. Bad login/password, or nonexistent database version. \nIf read from ~/.whoisxmlapi_login.ini, then it is probably wrong there.\n(To re-enter database version, quit now and start again.\nTry to enter username and password again?')
+            answer = g.ynbox('Login failed. Bad login/password, or nonexistent database version or bad ssl auth credentials. \nIf read from ~/.whoisxmlapi_login.ini, then it is probably wrong there.\n(To re-enter database version, quit now and start again.\nTry again?')
             if not answer:
                 exit(1)
     for the_feed in feeds:
-        the_feed.set_login_credentials(args['username'], args['password'])
+        if args['sslauth']:
+            the_feed.set_login_credentials('ssl')
+        else:
+            the_feed.set_login_credentials('password', login=args['username'], password=args['password'])
 
     #Feed has been set up now.
     #For daily feeds, get date range

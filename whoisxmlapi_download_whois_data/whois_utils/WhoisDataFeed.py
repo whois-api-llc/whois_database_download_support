@@ -13,6 +13,9 @@ import datetime
 
 import requests
 
+from requests.packages.urllib3.exceptions import SubjectAltNameWarning
+requests.packages.urllib3.disable_warnings(SubjectAltNameWarning)
+
 import whois_utils.whois_web_download_utils as whois_web_download_utils
 
 import whois_utils.whois_user_interaction as whois_utils_interaction
@@ -63,6 +66,8 @@ class WhoisDataFeed:
         self.feed_name = None
         self.data_format = None
         self.maxtries = 5
+        self.authtype = 'password'
+        
     def set_maxtries(self, maxtries):
         """Set the maximum number of download attempts"""
         if maxtries != None:
@@ -119,34 +124,72 @@ class WhoisDataFeed:
             sys.stderr.write('Config error: a feed should be either daily or quarterly, problem with feed "%s" , format "%s"\n'
                              % (feed_name, data_format))
             exit(1)
+        self.fix_base_url()
+            
+    def fix_base_url(self):
+        """Sets the base url based on the auth type. 
+        Can be invoked arbitrary times.
+        TODO: ssl basenames are hard-wired here"""
+        if self.authtype == 'password':
+            self.main_url=self.main_url.replace('https://direct.bestwhois.org','http://bestwhois.org')
+            self.main_url=self.main_url.replace('https://direct.domainwhoisdatabase.com','http://www.domainwhoisdatabase.com')
+            self.supported_tlds_url=self.supported_tlds_url.replace('https://direct.bestwhois.org','http://bestwhois.org')
+            self.supported_tlds_url=self.supported_tlds_url.replace('https://direct.domainwhoisdatabase.com','http://www.domainwhoisdatabase.com')
+        elif self.authtype == 'ssl':
+            self.main_url=self.main_url.replace('http://bestwhois.org','https://direct.bestwhois.org')
+            self.main_url=self.main_url.replace('http://www.domainwhoisdatabase.com', 'https://direct.domainwhoisdatabase.com')
+            self.supported_tlds_url=self.supported_tlds_url.replace('http://bestwhois.org','https://direct.bestwhois.org')
+            self.supported_tlds_url=self.supported_tlds_url.replace('http://www.domainwhoisdatabase.com', 'https://direct.domainwhoisdatabase.com')
+        else:
+            raise ValueError('Invalid auth type: %s' % authtype)
+
         
-    def set_login_credentials(self, login, password):
+    def set_login_credentials(self, authtype, login='', password='', cacertfile = 'whoisxmlapi.ca', keyfile = 'client.key', crtfile = 'client.crt'):
         """setup login credentials"""
-        if login.strip() != '':
-            #if the login name is provided, set up explicitly
-            self.login = login
-            self.password = password
+        if authtype == 'password':
+            self.authtype = 'password'
+            if login.strip() != '':
+                #if the login name is provided, set up explicitly
+                self.login = login
+                self.password = password
+                self.loginOK = False
+            else:
+                #Just whitespaces were provided: we try reading the default config ~/.whoisxmlapi_login.ini
+                try:
+                    password_config=ConfigParser.ConfigParser()
+                    password_config.read(os.path.abspath(os.path.join(os.path.expanduser('~/'), '.whoisxmlapi_login.ini')))            
+                    if self.feed_name != None and self.feed_name in set(set(password_config.sections())):
+                        self.login = password_config.get(self.feed_name,'login')
+                        self.password = password_config.get(self.feed_name,'password')
+                        self.loginOK = False
+                    else:
+                        self.login = password_config.get('default','login')
+                        self.password = password_config.get('default','password')
+                        self.loginOK = False
+                except:
+                    print_error_and_exit('Supposed to read password config ~/.whoisxmlapi_login.ini, but it was not found')
+        elif authtype == 'ssl':
+            #SSL authentication
+            self.authtype='ssl'
+            self.cacertfile = cacertfile
+            self.keyfile = keyfile
+            self.crtfile = crtfile
             self.loginOK = False
         else:
-            #Just whitespaces were provided: we try reading the default config ~/.whoisxmlapi_login.ini
-            try:
-                password_config=ConfigParser.ConfigParser()
-                password_config.read(os.path.abspath(os.path.join(os.path.expanduser('~/'), '.whoisxmlapi_login.ini')))            
-                if self.feed_name != None and self.feed_name in set(set(password_config.sections())):
-                    self.login = password_config.get(self.feed_name,'login')
-                    self.password = password_config.get(self.feed_name,'password')
-                    self.loginOK = False
-                else:
-                    self.login = password_config.get('default','login')
-                    self.password = password_config.get('default','password')
-                    self.loginOK = False
-            except:
-                print_error_and_exit('Supposed to read password config ~/.whoisxmlapi_login.ini, but it was not found')
-
+            raise ValueError('Invalid auth type: %s' % authtype)
+        self.fix_base_url()
+        
     def test_http_access(self):
         """This tests if the object can access the root directory using the provided http credentials"""
         test_session = requests.Session()
-        test_session.auth = (self.login, self.password)
+        if self.authtype == "password":
+            test_session.auth = (self.login, self.password)
+        elif self.authtype == "ssl":
+            test_session.verify= self.cacertfile
+            test_session.cert = (self.crtfile, self.keyfile)
+        else:
+            raise ValueError("Auth method not specified in feed.")
+    
         accesstest = self.main_url + '/' + self.access_test_file
         if self.is_quarterly:
             if self.dbversion == None:
@@ -157,7 +200,10 @@ class WhoisDataFeed:
                 raise ValueError("Quarterly feed accessed without setting date interval")
             accesstest=accesstest.replace('$date', self.startdate.strftime('%Y_%m_%d'))
         print_debug("Trying to access %s" % (accesstest))
-        probe = test_session.get(accesstest)
+        try:
+            probe = test_session.get(accesstest)
+        except requests.exceptions.SSLError:
+            print_error_and_exit("Invalid SSL credentials specified.")            
         if probe.status_code == 200:
             self.loginOK = True
             print_verbose('Verifying login: http access OK.')
@@ -169,9 +215,15 @@ class WhoisDataFeed:
     def open_http_session(self):
         """This opens a http session for downloading"""
         self.session = requests.Session()
-        self.session.auth = (self.login, self.password)
-        self.sessionopen = True
-
+        if self.authtype == 'password':
+            self.session.auth = (self.login, self.password)
+            self.sessionopen = True
+        elif self.authtype == 'ssl':
+            self.session.verify= self.cacertfile
+            self.session.cert = (self.crtfile, self.keyfile)
+            self.sessionopen = True
+        else:
+            raise ValueError("Auth method not specified in feed.")
     def get_url_contents(self, url):
         """Safely get the contents of an URL. Return an empty string if any error occurs."""
         if not self.sessionopen:

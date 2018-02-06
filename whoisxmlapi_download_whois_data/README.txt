@@ -4,7 +4,7 @@ Whois data download utility
 
 download_whois_data.py
 
-Release version 0.0.4 dated 2018-01-04.
+Release version 0.0.5 dated 2018-02-06.
 
 Copyright (c) 2010-2017 Whois API LLC,  http://www.whoisxmlapi.com
 ------------------------------------------------
@@ -12,7 +12,7 @@ Copyright (c) 2010-2017 Whois API LLC,  http://www.whoisxmlapi.com
 The script is provided for our subscribers to download data from their
 daily and quarterly data feed subscriptions.
 
-The aim of the script is to support web download of WHOIS data,
+The  aim of  the script  is  to support  web download  of WHOIS  data,
 especially in order to set up a WHOIS database.
 
 It is  a cross-platform solution for  end-users. It should be  used on
@@ -67,7 +67,9 @@ Contents
 ----------------
 
 README.txt		: this file
+README.SSL.txt		: documentation on how to set up ssl key-based authentication
 download_whois_data.py  : the script to run
+install_p12.py		: ssl key and cert installer script, see README.SSL.txt
 feeds.ini		: the configuration file describing the feeds supported by the script.
 			  Not intended to be edited by endusers.
 whois_utils		: a directory with the modules used by the script.
@@ -127,8 +129,16 @@ Step 2: Install Dependencies
 If these  steps were made,  the script's  dependencies are met,  it is
 ready for use.
 
+The script  supports the  access of the  data via  ssl-encrypted pages
+using ssl key-based authentication. Those clients who want to use this
+possibility should read the file
+
+README.SSL.txt
+
+to do the necessary steps for configuring this kind of access.
+
 3. Quick-start and basic use
----------------------------
+----------------------------
 
 The simplest way to use the script is to start it without any argument
 or the  --interactive option. On  Windows systems,  it can be  done by
@@ -146,9 +156,10 @@ after the daily feed.
 Setting up a password config file
 ---------------------------------
 
-The user  is prompted  for login  credentials by  default.  It  can be
-avoided by creating  a file named .whoisxmlapi_login.ini  in your home
-directory. (On Windows systems, the right file will be typically
+The user is prompted for login credentials by default (unless
+ssl-based auth is set up).  It can be avoided by creating a file named
+.whoisxmlapi_login.ini in your home directory. (On Windows systems,
+the right file will be typically
 "C:\Users\YourUsername\.whoisxmlapi_login.ini" .)
 
 It is  recommended to set its  permissions so that the  only logged-in
@@ -174,11 +185,26 @@ is mandatory, the others are optional.)
 If  this file  is  set-up, you  will  not have  to  specify login  and
 passwords in the dialogs or in the command-line.
 
+Setting ssl authentication
+--------------------------
+
+To do this, read the file README.SSL.txt.  If once you have set up ssl
+authentication, you can use  the --sslauth command-line option instead
+of the username  and password arguments or  the password configuration
+file. When running with  a GUI, if sslauth is set  up, the script will
+ask in a  dialog window whether you  want to use this  or use password
+auth, e.g. for feeds which you do not have ssl-based access.
+
 4. Advanced use
 ---------------
 
 The script can  be used with command-line parameters,  too. The option
---help provides a detailed description of its options. Some examples:
+--help provides a  detailed description of its  options. Some examples
+are below.  Please note: the data  for dates in the given examples are
+possibly already in archive feeds when you try them. If the respective
+files are not found, change the dates to more recent ones.
+
+Examples:
 
 List the supported feeds and data formats:
 
