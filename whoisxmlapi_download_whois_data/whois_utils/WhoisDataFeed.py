@@ -200,6 +200,7 @@ class WhoisDataFeed:
                 raise ValueError("Quarterly feed accessed without setting date interval")
             accesstest=accesstest.replace('$date', self.startdate.strftime('%Y_%m_%d'))
         print_debug("Trying to access %s" % (accesstest))
+        print_debug("Auth type: %s" % self.authtype)
         try:
             probe = test_session.get(accesstest)
         except requests.exceptions.SSLError:

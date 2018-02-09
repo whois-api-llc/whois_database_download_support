@@ -4,7 +4,7 @@ Whois data download utility
 
 download_whois_data.py
 
-Release version 0.0.5 dated 2018-02-06.
+Release version 0.0.6 dated 2018-02-09.
 
 Copyright (c) 2010-2017 Whois API LLC,  http://www.whoisxmlapi.com
 ------------------------------------------------
@@ -146,6 +146,15 @@ double  clicking. A  series  of  dialog windows  will  guide the  user
 through the  download process and help  to choose what to  download. A
 terminal  window will  show up  on Windows,  too, where  the user  can
 follow the progress of the download process.
+
+IMPORTANT:  the script  does not  check if  the combination  of dates,
+database   versions,  etc.    you  specify   result  in   an  existing
+dataset. E.g.   if you specify  future dates,  the script will  try to
+download the given files and report that they do not exist. Similarly,
+in  case of  quarterly feeds  if  you specify  a nonexistent  database
+version the  script will  return an  authentication issue  because you
+cannot have access to a yet  not existing directory. Hence, if you get
+an error, check the parameters first.
 
 Note:  if   you  download   data  for  quarterly   feeds,  a   set  of
 subdirectories  will be  created  (if  they do  not  yet exist)  which
