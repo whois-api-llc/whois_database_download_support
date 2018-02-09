@@ -71,7 +71,7 @@ README.SSL.txt		: documentation on how to set up ssl key-based authentication
 download_whois_data.py  : the script to run
 install_p12.py		: ssl key and cert installer script, see README.SSL.txt
 feeds.ini		: the configuration file describing the feeds supported by the script.
-			  Not intended to be edited by endusers.
+			  Not intended to be edited by end-users.
 whois_utils		: a directory with the modules used by the script.
 			  It contains the following files:
 			   __init__.py
@@ -98,8 +98,13 @@ Step 1: Install Python
 
 The  script has  been developed  with Python  2.7.12 and  it has  been
 tested with versions from 2.7.10 to  2.7.13. It should work with newer
-versions  of series  2 Python,  and it  is likely  that it  works with
-earlier versions of the 2.7. series.
+versions  of series  2 Python.
+
+If for some  reason you have an  earlier version of Python  2, such as
+Python 2.6,  you shall  have compatibility issues.  (This is  the case
+when you use the default Python  on certain releases of CentOS or RHEL
+ver. 6.) It is always possible on those systems to set up Python 2.7.x
+in parallel, consult the documentation of your system.
 
 -On Linux systems, use your package manager, e.g. "apt-get install python".
 -On Windows systems, download the installer from
