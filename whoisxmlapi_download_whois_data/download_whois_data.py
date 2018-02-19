@@ -19,7 +19,7 @@ import whois_utils.whois_user_interaction as whois_user_interaction
 from whois_utils.whois_user_interaction import *
 
 # GlobalSettings
-VERSION = "0.0.6"
+VERSION = "0.0.7"
 MYNAME = sys.argv[0].replace('./', '')
 FEEDCONFIGDIR = '.'
 MYDIR = os.path.abspath(os.path.dirname(__file__))
@@ -111,7 +111,7 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
     whois_user_interaction.DIALOG_COMMUNICATION = False
     # The user wants to list feeds
     if args['list_feeds']:
-        print "\nSupported feeds and data formats: "
+        sys.stderr.write("\nSupported feeds and data formats: ")
         sys.stderr.write("\n")
         for feed in formatmatrix.keys():
             sys.stderr.write("Feed: %.60s \n      formats: " % feed)
@@ -131,7 +131,7 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
             'See --list_feeds for the list of supported feeds and their data formats.')
     # The user wants data formats for this feed
     if args['list_dataformats']:
-        print "Data formats for feed %s: " % args['feed']
+        sys.stderr.write("Data formats for feed %s: " % args['feed'])
         for f in formatmatrix[args['feed']]:
             sys.stderr.write("%s " % f)
         sys.stderr.write("\n")
@@ -298,7 +298,7 @@ else:
                 the_feed.set_quarterly_dbversion(answer)
                 args['db_version'] = answer
             else:
-                answer = g.ynbox('Invalid feed name format. Try again?')
+                answer = g.ynbox('Invalid database name format. Try again?')
                 if not answer:
                     exit(1)
         args['db-version'] = answer
@@ -448,11 +448,16 @@ if len(total_failed) > 0:
     for u in total_failed:
         print_verbose(u)
     print_verbose('Re-run with the same settings to retry')
+    retcode = 2
 else:
     print_verbose('Everything has been downloaded successfully.')
-
+    retcode = 0
+    
 if DIALOG_COMMUNICATION:
     _ = g.msgbox('\n'.join([
         '%s has finished its activity.',
         'Please take a look at the terminal window to see the log.',
         'Afterwards, press OK to close this window and quit.']) % MYNAME, windowtitle)
+
+#We exit with 2 if any file which was supposed to be there failed to download.
+exit(retcode)
