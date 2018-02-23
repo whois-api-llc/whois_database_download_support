@@ -19,10 +19,10 @@ import whois_utils.whois_user_interaction as whois_user_interaction
 from whois_utils.whois_user_interaction import *
 
 # GlobalSettings
-VERSION = "0.0.7"
+VERSION = "0.0.8"
 MYNAME = sys.argv[0].replace('./', '')
-FEEDCONFIGDIR = '.'
 MYDIR = os.path.abspath(os.path.dirname(__file__))
+FEEDCONFIGDIR = MYDIR
 
 # Read the list of supported formats.
 # Probably the directory with "feeds.ini" should be given more precisely.
