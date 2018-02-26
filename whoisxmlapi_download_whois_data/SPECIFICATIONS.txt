@@ -1,0 +1,203 @@
+SPECIFICATIONS.txt for
+
+download_whois_data.py
+
+Copyright (c) 2010-2018 Whois API LLC,  http://www.whoisxmlapi.com
+-------------------------------------------------------------------
+
+This document is intended for developers and advanced users.
+
+It provides  a declarative specification.  The  requirements which the
+script is supposed to meet by design are described. The business logic
+of the download  process is outlined.  The return codes  of the script
+are listed and the possible causes are defined.
+
+For a brief guide on how to use the program consult "README.txt".
+
+Contents:
+---------
+
+1. Requirements met by the downloader script
+
+2. The downloading process
+
+3. Exit codes
+
+1. Requirements met by the downloader script
+--------------------------------------------
+
+The script  is designed to be  a simple utility to  support http based
+downloading of  data from the  feeds provided by WhoisXML API, Inc.
+
+It is designed to meet the following requirements:
+
+-The script is  cross-platform. It is supposed to run  on any platform
+ on  which Python  >=2.7.x  and  the dependencies  of  the script  are
+ available.
+
+-All its functions are  available from command-line using command-line
+ arguments.
+
+-It is  possible to operate  the script with  a series of  GUI dialogs
+ instead of command-line parameters.
+
+-It is  subscription-independent: all possible data  feeds and formats
+ are offered, regardless of the type  of the subscription used for the
+ authentication. The script does not verify permissions, it reports an
+ error if the access is denied to the given resource.
+
+-It supports plain http access with simple http authentication as well
+ as https access with ssl key-based authentication.
+
+-The  available  data  are  specified in  a  config  file  (feeds.ini)
+ provided with  the scripts.  The  feeds.ini file  is the part  of the
+ distribution, the end-users are not supposed to modify it.
+
+-The script determines a list of files to be downloaded offline, based
+ on  the   feeds'  configuration  and  the   parameters  provided  (in
+ command-line arguments  or in the  dialog utility) before  the actual
+ download process.
+
+-The files in the target directory  are arranged in the same directory
+ structure as on the server.
+
+-The  script reports  the list  of files  which were  not possible  to
+ download at the end of its  operation. This is not necessary an error
+ as it can be normal as the predetermined list may contain files which
+ only exist under certain circumstances.
+
+-The script does not verify  the dates and quarterly database versions
+ specified.   A  wrong  specification  results in  error  messages  or
+ reports on files which were not possible to download.
+
+-It downloads md5 checksums before each file whenever available. Files
+ which already exist  in the target directory are  redownloaded if and
+ only if  their checksum differs from  the checksum on the  server. In
+ this way it can be used to verify or synchronize a local file set.
+
+
+2. The download process
+-----------------------
+
+The script follows a streamline procedure for downloading all needed
+data. It is outlined in this section.
+
+Phase I: Preparation
+
+The target directory is not modified in this phase.
+
+The parameters  provided by the user  are read, either by  parsing the
+command-line  arguments  or  through  a  sequence  of  dialog  windows
+depending  on the  mode of  operation. During  and after  this process
+there are  some consistency checks. Upon  the failure of any  of these
+checks the script  does terminates with an error: exits  with an error
+message and an error code, see Section 3 for the list of error codes.
+
+In command-line mode the following  procedure occurs after parsing and
+checking the arguments.  (In interactive mode these steps  are part of
+the verification process during the interaction with the user.)
+
+Based  on  this information  the  feed  downloader components  of  the
+scripts  are  initialized.   (These   are  objects  belonging  to  the
+"WhoisDataFeed"  class).  
+
+The supplied login credentials are  verified by downloading the access
+test file  of each of  the feeds (specified as  the "access_test_file"
+attribute in  feeds.ini.  Failure  of any of  these checks  results in
+termination with an error.
+
+The list of available tlds for  each feed is determined by downloading
+the files specifying  the actual list of supported  tlds (specified in
+the "supported_tlds_url" in feeds.ini). If  the list of supported tlds
+is date  dependent, the supported  tlds list  is considered to  be the
+superset of  all of  these. The  tlds for which  the download  will be
+carried  out  will be  the  intersection  of  this  set with  the  set
+specified by the user.
+
+By  the end  of this  phase  the list  of  files to  be downloaded  is
+determined.
+
+Phase II: downloading the files
+
+The script loops through the list of files to be downloaded.
+
+For each file, the following logic is followed:
+
+1. The  md5 checksum of the  file is downloaded from  the server (Most
+feeds support  it, this step is  skipped if the feed  does not support
+md5 checksums.)
+
+2.  The  existence of  the local  file with the  same md5  checksum is
+verified. If the  file is there and consistent with  its md5 checksum,
+the downloading of the file is  considered as complete and the process
+is finished for this file.
+
+3. If the file  does not exist, there is no md5 file  or the md5 check
+fails, it  is verified that the  number of download attempts  for this
+file does  not exceed  3 (or  the number  specified in  the --maxtries
+option). If it is exceeded, the file considered as unavailable and the
+process is finished for the file.
+
+4. The downloading of the file is initiated after the download process
+(regardless of its  success), the process is repeated from  step 1 for
+the file.
+
+Phase III: report and exit.
+
+In verbose  mode a list of  files which were unavailable  is reported.
+The script  terminates with an exit  code 0 if all  files were checked
+and found O.K.  or have been downloaded if necessary.  A return code 2
+is generated if there were unavailable files.
+
+3. Exit codes
+-------------
+
+0: Normal termination.
+
+1: Abnormal termination.
+   This is the error code given upon most errors.
+   - No feed is specified for downloading
+   - The feed specified for downloading does not exist (Invalid feed.)
+   - No data format is specified for downloading.
+   - The chosen feed does not support the chosen data format.
+   - The database version of a quarterly feed is not specified or
+     it is not of the expected form
+     (character "v" followed by a number, e.g. v20)
+   - The start date for downloading from a daily feed is not specified or it is
+     not in the format "YYYYMMDD"
+   - The start end for downloading from a daily is given but
+     not in the format "YYYYMMDD"
+   - The end date of the interval for daily feed downloading is earlier than
+     the start date.
+   - Login failed due to bad login name or password, or bad SSL credentials
+   - The specified quarterly database does not exist
+     	 (results in a "Login failed message")
+   - The list of tlds to be downloaded is not specified.
+   - No tlds specified for downloading are supported by the feed.
+   - The output directory is not specified or does not exist.
+   - Invalid feed configuration file, one or more feeds are ill-defined.
+   - Password auth chosen, no password given and ~/.whoisxmlapi_login.ini does
+     not exist.
+   - The SSL credentials for authentication are invalid.
+   - The download session is not open when downloading
+     (internal issue, should not occur). 
+   - Database version specified for a daily feed
+     (internal issue, should not occur).
+   - Time interval specified for a quarterly feed
+     (internal issue, should not occur).
+   - The supported_tlds file for the feed cannot be downloaded.
+
+2: Normal termination but some files which can or should be there according
+   to the specification were not there.
+   (Possible causes: no file on the server because not yet generated,
+    no file on the server because there was no change in the tld on
+    the given day, etc.)
+
+6: Informational or canceled action.
+   Possible causes are:
+   - In interactive mode, "Cancel" was pressed in a dialog window.
+   - The program was invoked with the --list-feeds option
+   - The program was invoked with the --list-dataformats option
+   - The program was invoked with the --list-tlds option
+
+

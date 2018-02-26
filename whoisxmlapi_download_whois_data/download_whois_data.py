@@ -19,7 +19,7 @@ import whois_utils.whois_user_interaction as whois_user_interaction
 from whois_utils.whois_user_interaction import *
 
 # GlobalSettings
-VERSION = "0.0.8"
+VERSION = "0.0.9"
 MYNAME = sys.argv[0].replace('./', '')
 MYDIR = os.path.abspath(os.path.dirname(__file__))
 FEEDCONFIGDIR = MYDIR
@@ -349,7 +349,7 @@ else:
     ):
         answer = g.ynbox('\n'.join(['SSL auth config detected.',
                                     'Do you want to use ssl auth?',
-                                    '(If not, we go for password auth.']),
+                                    '(If not, we go for password auth.)']),
                          windowtitle)
     if answer:
         args['sslauth'] = True

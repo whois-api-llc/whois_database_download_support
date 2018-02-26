@@ -4,10 +4,10 @@ Whois data download utility
 
 download_whois_data.py
 
-Release version 0.0.8 dated 2018-02-23.
+Release version 0.0.9 dated 2018-02-23.
 
 Copyright (c) 2010-2017 Whois API LLC,  http://www.whoisxmlapi.com
-------------------------------------------------
+-------------------------------------------------------------------
 
 The script is provided for our subscribers to download data from their
 daily and quarterly data feed subscriptions.
@@ -33,41 +33,22 @@ The script is located in the subdirectory
 
 whoisxmlapi_download_whois_data
 
-In addition, WhoisXML API subscribers can access the scripts from the
-following URLs:
-
-Quarterly releases:
-
-http://www.domainwhoisdatabase.com/whois_database/$releaseversion/docs/download_scripts
-
-(replace $version by e.g. v20 or v21, available from v19 on)
-
-Quarterly releases, CCTLDs:
-
-http://domainwhoisdatabase.com/domain_list_quarterly/$releaseversion/docs/download_scripts
-
-(replace $version by e.g. v6 or v7, available from v5 on)
-
-Daily feeds:
-
-http://bestwhois.org/domain_name_data/docs/scripts
-
-(The script is the same for all the locations and can be used
-for any of the subscriptions.)
-
 Contents
 --------
 1. List of files
 2. Installation
-3. Basic use
-4. Advanced use
-5. Some remarks on the operation of the script
+3. Basic use: GUI operation
+4. Command-line operation, examples
+5. Setting up stored authentication credentials
+6. Some remarks on the operation of the script
 
 1. List of files
 ----------------
 
 README.txt		: this file
 README.SSL.txt		: documentation on how to set up ssl key-based authentication
+SPECIFICATIONS.txt      : specifications of the scripts. For developers and advanced users.
+FAQ.txt			: frequently asked questions
 download_whois_data.py  : the script to run
 install_p12.py		: ssl key and cert installer script, see README.SSL.txt
 feeds.ini		: the configuration file describing the feeds supported by the script.
@@ -142,7 +123,7 @@ README.SSL.txt
 
 to do the necessary steps for configuring this kind of access.
 
-3. Quick-start and basic use
+3. Basic use: GUI operation
 ----------------------------
 
 The simplest way to use the script is to start it without any argument
@@ -166,6 +147,61 @@ subdirectories  will be  created  (if  they do  not  yet exist)  which
 replicate the  directory structure of  the given quarterly  feed.  For
 daily feeds  the files  will be downloaded  into a  subdirectory named
 after the daily feed.
+
+4. Command-line operation, examples
+---------------------------------------
+
+The script can  be used with command-line parameters,  too. The option
+--help provides a  detailed description of its  options. Some examples
+are below.  Please note: the data  for dates in the given examples are
+possibly already in archive feeds when you try them. If the respective
+files are not found, change the dates to more recent ones.
+
+Examples:
+---------
+
+List the supported feeds and data formats:
+
+./download_whois_data.py --list-feeds
+
+List the data formats available for the feed "whois_database"
+
+./download_whois_data.py --feed whois_database --list-dataformats
+
+List tlds  supported by the  feed "domain_names_whois". The  result is
+the set of all tlds supported on any of the days. 
+
+./download_whois_data.py --feed domain_names_whois --startdate 20170810 --enddate 20170812 --dataformats full_csv --list-supported-tlds --username JohnDoe --password MyPassword42
+
+In the previous example we have specified the username and password in
+the command-line. In the following examples we assume that stored
+credentials have been set up according to Section 5.
+
+Download mysql  binary dumps (percona)  and simple csv files  for tlds
+"aaa" and "abarth"  from the quarterly release v20  into the directory
+"download_testdir" (should exist already):
+
+./download_whois_data.py --verbose --feed whois_database --db-version v20 --dataformat percona,simple_csv --tlds aaa,abarth --output-dir download_testdir
+
+Download simple csv files for all tlds from the quarterly release v20
+into the directory /tmp (should exist already):
+
+./download_whois_data.py --verbose --feed whois_database --db-version v20 --dataformat simple_csv --all-tlds --output-dir /tmp
+
+Download full  csv files for  the tld aero from 20170810  to 20170812
+into "download_testdir". Use ssl authentication.
+
+./download_whois_data.py --feed domain_names_whois --startdate 20170810 --enddate 20170812 --dataformats full_csv --tlds aero --sslauth --verbose --output-dir download_testdir
+
+Download  full csv  data for  all tlds  for 2017-08-11  into "download
+testdir" (note: the --tlds com is mandatory but it is ignored, you can
+choose any other existing tld)
+
+./download_whois_data.py --feed domain_names_whois --startdate 20170811 --dataformats full_csv_all_tlds --tlds com  --verbose --output-dir download_testdir
+
+
+4. Setting up stored authentication credentials
+-----------------------------------------------
 
 Setting up a password config file
 ---------------------------------
@@ -209,53 +245,7 @@ file. When running with  a GUI, if sslauth is set  up, the script will
 ask in a  dialog window whether you  want to use this  or use password
 auth, e.g. for feeds which you do not have ssl-based access.
 
-4. Advanced use
----------------
-
-The script can  be used with command-line parameters,  too. The option
---help provides a  detailed description of its  options. Some examples
-are below.  Please note: the data  for dates in the given examples are
-possibly already in archive feeds when you try them. If the respective
-files are not found, change the dates to more recent ones.
-
-Examples:
-
-List the supported feeds and data formats:
-
-./download_whois_data.py --list-feeds
-
-List the data formats available for the feed "whois_database"
-
-./download_whois_data.py --feed whois_database --list-dataformats
-
-List tlds  supported by the  feed "domain_names_whois". The  result is
-the set of all tlds supported on any of the days.
-
-./download_whois_data.py --feed domain_names_whois --startdate 20170810 --enddate 20170812 --dataformats full_csv --list-supported-tlds
-
-Download mysql  binary dumps (percona)  and simple csv files  for tlds
-"aaa" and "abarth"  from the quarterly release v20  into the directory
-"download_testdir" (should exist already):
-
-./download_whois_data.py --verbose --feed whois_database --db-version v20 --dataformat percona,simple_csv --tlds aaa,abarth --output-dir download_testdir
-
-Download simple csv files for all tlds from the quarterly release v20
-into the directory /tmp (should exist already):
-
-./download_whois_data.py --verbose --feed whois_database --db-version v20 --dataformat simple_csv --all-tlds --output-dir /tmp
-
-Download full  csv files for  the tld aero from 20170810  to 20170812
-into "download_testdir" 
-
-./download_whois_data.py --feed domain_names_whois --startdate 20170810 --enddate 20170812 --dataformats full_csv --tlds aero --verbose --output-dir download_testdir
-
-Download  full csv  data for  all tlds  for 2017-08-11  into "download
-testdir" (note: the --tlds com is mandatory but it is ignored, you can
-choose any other existing tld)
-
-./download_whois_data.py --feed domain_names_whois --startdate 20170811 --dataformats full_csv_all_tlds --tlds com  --verbose --output-dir download_testdir
-
-5. Some remarks on the operation of the script
+6. Some remarks on the operation of the script
 ----------------------------------------------
 
 The script generates a list of files to be downloaded according to the

@@ -1,0 +1,45 @@
+FAQ.txt for
+
+download_whois_data.py
+
+Copyright (c) 2010-2018 Whois API LLC,  http://www.whoisxmlapi.com
+-------------------------------------------------------------------
+
+Q1: I  obtained an  error  stating that  my login  and password  are
+invalid. I can access the page with my browser. What happened?
+
+A1:  It might be  the case  that you have  specified a wrong  date or
+database version. E.g. you chose v20 of quarterly cctld feeds when the
+last version is v8. As the script  does not have data on the available
+db  versions,  it  derives  file  locations from  the  data  you  have
+specified,  but these  locations  do  not exist  on  our server.   For
+security reasons the server will  report invalid login credentials, so
+it will appear as if there was something wrong with your password.
+
+Please double-check the feed name and the parameters you are using.
+--------------------------------------------------------------------
+
+Q2: The  script  says  it cannot  determine  the  list of  supported
+tlds. Why?
+
+A2: In spite  of all of our efforts it may  happen that the necessary
+supported_tlds file is missing. Please contact support in this case.
+
+--------------------------------------------------------------------
+
+Q3:  The   script  reports   files  which   could  not   have  been
+downloaded. When shall they be available?
+
+A3: It  may happen  that some  files derived  according to  the naming
+logic of a  given feed do not  exist at the time  of downloading. One
+reason might  be that the  file is not yet  prepared when you  run the
+script. If  you re-run the script  later with the same  parameters, it
+will not  redownload files which are  already there and have  not been
+changed, but  it shall find the  missing ones. It may  also occur that
+the   file  will   never   exist.   In   feeds   devoted  to   changes
+(domain_names_new,  domain_names_dropped),  for   instance,  it  might
+happen that there were no changes in the data the given day. We do not
+store empty files, so these files will be reported as unavailable, but
+this is normal.
+
+--------------------------------------------------------------------
