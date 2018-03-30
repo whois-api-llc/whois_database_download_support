@@ -84,7 +84,7 @@ https://github.com/whois-api-llc/whois_database_download_support
 The script is self-documenting, please  see the details of its options
 in the output with the --help option:
 
-./load_csvs_to_mysql.py --help
+./flexible_csv_to_mysqldb.py --help
 
 (in DOS command-line, please omit "./")
 
@@ -109,7 +109,7 @@ into a newly created table "daily_test".
 
 This can be done with the following command:
 
-./load_csvs_to_mysql.py --mysql-user root --mysql-password MYSQLROOTPASSWORD --mysql-database csvload_test --overwrite-mysql-table --mysql-table daily_test --threads 4 /scratch/whois_data/cctld_discovered_domain_names_whois/*.csv.gz
+./flexible_csv_to_mysqldb.py --mysql-user root --mysql-password MYSQLROOTPASSWORD --mysql-database csvload_test --overwrite-mysql-table --mysql-table daily_test --threads 4 /scratch/whois_data/cctld_discovered_domain_names_whois/*.csv.gz
 
 Some important comments and tips:
 
@@ -170,7 +170,7 @@ downloaded the data for the ".eu" tld into the file
 We  will  load these  data  into  the  table "quarterly_test"  of  the
 database "csvload_test". The command is:
 
-./load_csvs_to_mysql.py --mysql-user root --mysql-password MYSQLROOTPASSWORD --mysql-database csvload_test --mysql-table quarterly_test --overwrite-mysql-table /scratch/whois_data/v6/csv/tlds/simple/csvs.eu.simple.tar.gz
+./flexible_csv_to_mysqldb.py --mysql-user root --mysql-password MYSQLROOTPASSWORD --mysql-database csvload_test --mysql-table quarterly_test --overwrite-mysql-table /scratch/whois_data/v6/csv/tlds/simple/csvs.eu.simple.tar.gz
 
 
 
