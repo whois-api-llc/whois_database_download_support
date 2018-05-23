@@ -18,12 +18,14 @@ requests.packages.urllib3.disable_warnings(SubjectAltNameWarning)
 
 import whois_utils.whois_web_download_utils as whois_web_download_utils
 
-import whois_utils.whois_user_interaction as whois_utils_interaction
+import whois_utils.whois_user_interaction as whois_user_interaction
 from whois_utils.whois_user_interaction import *
 
-def set_interaction_verbosity(debug, verbose, dialog_communication):
-    set_verbosity(debug, verbose, dialog_communication)
-    
+def set_verbosity(debug, verbose, dialog_communication):
+    whois_user_interaction.DIALOG_COMMUNICATION = dialog_communication
+    whois_user_interaction.VERBOSE = verbose
+    whois_user_interaction.DEBUG = debug
+
 def feed_format_matrix(config_dir):
     """Utility function to list formats available for feeds"""
     feeds_config = ConfigParser.ConfigParser()
@@ -93,7 +95,7 @@ class WhoisDataFeed:
             self.download_masks=self.feeds_config.get(feed_name + '__' + data_format, 'download_masks').split(',')
             #Removing temporarily
             #self.sha256path=self.feeds_config.get(feed_name + '__' + data_format, 'sha256_path')
-            self.supported_tlds_url=self.feeds_config.get(feed_name + '__' + data_format, 'supported_tlds_url')
+
         except:
             print_error_and_exit('data feed "%s" does not exist or it does not support the format "%s"\n'
                 % (feed_name, data_format))
@@ -124,8 +126,32 @@ class WhoisDataFeed:
             sys.stderr.write('Config error: a feed should be either daily or quarterly, problem with feed "%s" , format "%s"\n'
                              % (feed_name, data_format))
             exit(1)
+        #How to determine supported tlds
+        try:
+            #by default we assume that there is an url for supported tlds
+            self.supported_tlds_url = self.feeds_config.get(feed_name + '__' + data_format, 'supported_tlds_url')
+        except:
+            #If the url was not specified, supported tlds should be listed in the config
+            self.supported_tlds_url = None
+            try:
+                tlds = self.feeds_config.get(feed_name + '__' + data_format, 'supported_tlds_list')
+                self.supported_tlds = [tld.strip() for tld in tlds.split(' ')]
+            except:
+                print_error_and_exit('Config error: cannot determine supported url config in feed "%s" , format "%s"\n'
+                % (feed_name, data_format))
+                exit(1)        
+
+        #download_masks_archive: archive feed specific, it is for support of old_data subdirs
+        try:
+            self.download_masks_archive = self.feeds_config.get(feed_name + '__' + data_format, 'download_masks_archive').split(',')
+        except:
+            self.download_masks_archive = None
+                
+        #in any case we fix urls
         self.fix_base_url()
-            
+
+        
+
     def fix_base_url(self):
         """Sets the base url based on the auth type. 
         Can be invoked arbitrary times.
@@ -133,13 +159,21 @@ class WhoisDataFeed:
         if self.authtype == 'password':
             self.main_url=self.main_url.replace('https://direct.bestwhois.org','http://bestwhois.org')
             self.main_url=self.main_url.replace('https://direct.domainwhoisdatabase.com','http://www.domainwhoisdatabase.com')
-            self.supported_tlds_url=self.supported_tlds_url.replace('https://direct.bestwhois.org','http://bestwhois.org')
-            self.supported_tlds_url=self.supported_tlds_url.replace('https://direct.domainwhoisdatabase.com','http://www.domainwhoisdatabase.com')
+            try:
+                self.supported_tlds_url=self.supported_tlds_url.replace('https://direct.bestwhois.org','http://bestwhois.org')
+                self.supported_tlds_url=self.supported_tlds_url.replace('https://direct.domainwhoisdatabase.com','http://www.domainwhoisdatabase.com')
+            except:
+                #explicit list is given, supported tlds url is none
+                pass
         elif self.authtype == 'ssl':
             self.main_url=self.main_url.replace('http://bestwhois.org','https://direct.bestwhois.org')
             self.main_url=self.main_url.replace('http://www.domainwhoisdatabase.com', 'https://direct.domainwhoisdatabase.com')
-            self.supported_tlds_url=self.supported_tlds_url.replace('http://bestwhois.org','https://direct.bestwhois.org')
-            self.supported_tlds_url=self.supported_tlds_url.replace('http://www.domainwhoisdatabase.com', 'https://direct.domainwhoisdatabase.com')
+            try:
+                self.supported_tlds_url=self.supported_tlds_url.replace('http://bestwhois.org','https://direct.bestwhois.org')
+                self.supported_tlds_url=self.supported_tlds_url.replace('http://www.domainwhoisdatabase.com', 'https://direct.domainwhoisdatabase.com')
+            except:
+                #explicit list is given, supported tlds url is none
+                pass
         else:
             raise ValueError('Invalid auth type: %s' % authtype)
 
@@ -270,8 +304,9 @@ class WhoisDataFeed:
             url = self.supported_tlds_url.replace('$dbversion', self.dbversion)
             tlds = self.get_url_contents(url).strip().split(',')
             self.supported_tlds = [tld.strip() for tld in tlds]
-        elif self.is_daily:
+        elif self.is_daily and self.supported_tlds_url != None:
             """daily feeds: listing available for dates"""
+            """except when we were given the tlds explicityl"""
             ndays = (self.enddate - self.startdate).days + 1
             self.supported_tlds = []
             for day in range(ndays):
@@ -344,44 +379,70 @@ class WhoisDataFeed:
                 ndays = 1
             for mask in self.download_masks:
                 for day in range(ndays):
-                    thismask = self.actual_url(mask, self.dbversion, tld, (startdate + datetime.timedelta(days=day)))
-                    downloadurl = mainurl + '/' + thismask
-                    if self.is_daily:
-                        thistargetdir=os.path.dirname(os.path.abspath(os.path.join(targetdir, self.feed_name, thismask)))
-                    else:
-                        thistargetdir=os.path.dirname(os.path.abspath(os.path.join(targetdir, thismask)))
-                    print_verbose("downloading %s into %s" % (downloadurl, unicode(thistargetdir)))
-                    #Put together md5 name
-                    if self.md5path == 'NEXT_TO_FILE':
-                        md5url = downloadurl + '.md5'
-                    elif self.md5path != None:
-                        thefilename = thismask.split('/')[-1]
-                        thismd5file = self.substitute_mask(self.md5mask, self.dbversion, tld, (startdate + datetime.timedelta(days=day)), thefilename)
-                        md5url = mainurl + '/' + self.md5path + '/' + thismd5file
-                    else:
-                        #md5 unsupported
-                        md5url = None
-
-                    download_urls=[]
-                    if not re.search(r'\$ALLFILES', downloadurl):
-                        download_urls.append(downloadurl)
-                    else:
-                        print_verbose("Directory contents detected. Expanding urls")
-                        print_verbose("Checksums not supported in this case.")
-                        md5url = None
-                        downloadurl_base = downloadurl.replace('$ALLFILES','')
-                        downloadfiles = whois_web_download_utils.webdir_ls(downloadurl_base, self.session)
-                        if downloadfiles != []:
-                            for downloadfile in downloadfiles:
-                                download_urls.append(downloadurl_base + downloadfile)
-                    #We do the main job here: downloading
-                    for downloadurl in download_urls:
-                        success = whois_web_download_utils.web_download_and_check_file(downloadurl, md5url, self.session, thistargetdir, self.maxtries)
-                        if success:
-                            print_verbose('SUCCESS: downloaded %s.' % (downloadurl))
-                            self.downloaded.append(downloadurl)
+                    #First we check that it is not an earlier day from an archive feed
+                    thisdaysyear = (startdate + datetime.timedelta(days=day)).year
+                    if self.download_masks_archive == None or (
+                            self.download_masks != None and thisdaysyear == datetime.date.today().year):
+                        thismask = self.actual_url(mask, self.dbversion, tld, (startdate + datetime.timedelta(days=day)))
+                        downloadurl = mainurl + '/' + thismask
+                        if self.is_daily:
+                            thistargetdir=os.path.dirname(os.path.abspath(os.path.join(targetdir, self.feed_name, thismask)))
                         else:
-                            print_verbose('Download of %s FAILED. It may not exist, or please try again.' % (downloadurl))
-                            self.failed.append(downloadurl)
+                            thistargetdir=os.path.dirname(os.path.abspath(os.path.join(targetdir, thismask)))
+                        print_verbose("downloading %s into %s" % (downloadurl, unicode(thistargetdir)))
+                        #Put together md5 name
+                        if self.md5path == 'NEXT_TO_FILE':
+                            md5url = downloadurl + '.md5'
+                        elif self.md5path != None:
+                            thefilename = thismask.split('/')[-1]
+                            thismd5file = self.substitute_mask(self.md5mask, self.dbversion, tld, (startdate + datetime.timedelta(days=day)), thefilename)
+                            md5url = mainurl + '/' + self.md5path + '/' + thismd5file
+                        else:
+                            #md5 unsupported
+                            md5url = None
 
-        
+                        #this list is only for $ALLFILES where is no md5 support anyway
+                        download_urls=[]
+                        if not re.search(r'\$ALLFILES', downloadurl):
+                            download_urls.append(downloadurl)
+                        else:
+                            print_verbose("Directory contents detected. Expanding urls")
+                            print_verbose("Checksums not supported in this case.")
+                            md5url = None
+                            downloadurl_base = downloadurl.replace('$ALLFILES','')
+                            downloadfiles = whois_web_download_utils.webdir_ls(downloadurl_base, self.session)
+                            if downloadfiles != []:
+                                for downloadfile in downloadfiles:
+                                    download_urls.append(downloadurl_base + downloadfile)
+                                    
+                    #We do the main job here: downloading
+                        for downloadurl in download_urls:
+                            success = whois_web_download_utils.web_download_and_check_file(downloadurl, md5url, self.session, thistargetdir, self.maxtries)
+                            if success:
+                                print_verbose('SUCCESS: downloaded %s.' % (downloadurl))
+                                self.downloaded.append(downloadurl)
+                            else:
+                                print_verbose('Download of %s FAILED. It may not exist, or please try again.' % (downloadurl))
+                                self.failed.append(downloadurl)
+                        #We have to treat archive stuff separately
+            if self.download_masks_archive != None:
+                print_verbose('Examining archive URLs')
+                for mask in self.download_masks_archive:
+                    for day in range(ndays):
+                        thisdaysyear = (startdate + datetime.timedelta(days=day)).year
+                        if thisdaysyear != datetime.date.today().year:
+                            thismask = self.actual_url(mask.replace('$year',str(thisdaysyear)),
+                                                       self.dbversion, tld, (startdate + datetime.timedelta(days=day)))
+                            downloadurl = mainurl + '/' + thismask
+                            md5url = None
+                            thistargetdir=os.path.dirname(os.path.abspath(os.path.join(targetdir, self.feed_name, thismask)))
+                            success = whois_web_download_utils.web_download_and_check_file(downloadurl,
+                                                                                           md5url,
+                                                                                           self.session,
+                                                                                           thistargetdir, self.maxtries)
+                            if success:
+                                print_verbose('SUCCESS: downloaded %s.' % (downloadurl))
+                                self.downloaded.append(downloadurl)
+                            else:
+                                print_verbose('Download of %s FAILED. It may not exist, or please try again.' % (downloadurl))
+                                self.failed.append(downloadurl)

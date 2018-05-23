@@ -19,7 +19,7 @@ import whois_utils.whois_user_interaction as whois_user_interaction
 from whois_utils.whois_user_interaction import *
 
 # GlobalSettings
-VERSION = "0.0.9"
+VERSION = "0.1.0"
 MYNAME = sys.argv[0].replace('./', '')
 MYDIR = os.path.abspath(os.path.dirname(__file__))
 FEEDCONFIGDIR = MYDIR
@@ -109,6 +109,7 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
     whois_user_interaction.VERBOSE = args['verbose']
     whois_user_interaction.DEBUG = args['debug']
     whois_user_interaction.DIALOG_COMMUNICATION = False
+    wdf.set_verbosity(args['debug'], args['verbose'], False)
     # The user wants to list feeds
     if args['list_feeds']:
         sys.stderr.write("\nSupported feeds and data formats: ")
@@ -241,9 +242,11 @@ else:
     # Interacitve version with easygui
     args = {}
     DIALOG_COMMUNICATION = True
+    #With dialogs we are always verbose but never debug
     whois_user_interaction.VERBOSE = True
     whois_user_interaction.DEBUG = False
     whois_user_interaction.DIALOG_COMMUNICATION = True
+    wdf.set_verbosity(False, True, True)
     # Things you cannot do when interactive
     # Note: set the next two to True for console debug
     args['cacertfile'] = MYDIR + '/whoisxmlapi.ca'

@@ -83,7 +83,7 @@ def web_download_and_check_file(url, md5url, session, output_dir, maxtries):
             if not gotit:
                 print_verbose('Verified download: attempt #%d failed, md5 does not match. Redownloading.' % (ntries+1))
         elif gotfile and not gotmd5:
-            print_verbose('File downloaded but no md5 sum. UNVERIFIED')
+            print_verbose('File downloaded but no md5 sum. Unverified. This can be normal.')
             gotit = True
         else:
             print_verbose('File not found. Giving up.')
