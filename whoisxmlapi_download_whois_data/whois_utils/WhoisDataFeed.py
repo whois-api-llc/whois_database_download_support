@@ -112,6 +112,12 @@ class WhoisDataFeed:
             self.description=self.feeds_config.get(feed_name + '__' + data_format, 'description')
         except:
             self.description='No description about this feed. Consult the documentation.'
+        #tld-independent feeds do not need any tld specificaiton
+        try:
+            self.tldindependent=self.feeds_config.get(feed_name + '__' + data_format, 'tldindependent')
+        except:
+            self.tldindependent=False
+        #Type of the feed, daily/quarterly
         try:
             self.is_daily = self.feeds_config.getboolean(feed_name + '__' + data_format, 'daily_feed')
             if self.is_daily:

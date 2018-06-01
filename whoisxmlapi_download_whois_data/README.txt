@@ -194,10 +194,10 @@ into "download_testdir". Use ssl authentication.
 ./download_whois_data.py --feed domain_names_whois --startdate 20170810 --enddate 20170812 --dataformats full_csv --tlds aero --sslauth --verbose --output-dir download_testdir
 
 Download  full csv  data for  all tlds  for 2017-08-11  into "download
-testdir" (note: the --tlds com is mandatory but it is ignored, you can
+testdir" 
 choose any other existing tld)
 
-./download_whois_data.py --feed domain_names_whois --startdate 20170811 --dataformats full_csv_all_tlds --tlds com  --verbose --output-dir download_testdir
+./download_whois_data.py --feed domain_names_whois --startdate 20170811 --dataformats full_csv_all_tlds  --verbose --output-dir download_testdir
 
 
 4. Setting up stored authentication credentials
@@ -277,9 +277,3 @@ the same parameters  later in this case: the  already downloaded files
 will not be downloaded again, but the script will make new attempts to
 download the missing ones.
 
-Note: some feeds support the download of data for all tlds in a single
-file.    For    instance,    "domain_names_whois"   has    a    format
-"regular_csv_all_tlds". In that case, somewhat illogically, the script
-still asks to select a domain to download data for. Please specify one
-of the  domains to proceed, though  script will ignore your  choice in
-this case. This will be fixed in the future.

@@ -19,7 +19,7 @@ import whois_utils.whois_user_interaction as whois_user_interaction
 from whois_utils.whois_user_interaction import *
 
 # GlobalSettings
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 MYNAME = sys.argv[0].replace('./', '')
 MYDIR = os.path.abspath(os.path.dirname(__file__))
 FEEDCONFIGDIR = MYDIR
@@ -204,10 +204,13 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
             '  -bad username or password in ~/.whoisxmlapi_login.ini\n'
             '  -invalid ssl auth credentials if sslauth used\n'
             '  -wrong or non-existing quarterly database version specified\n')
-        # Update list of available tlds
+    # Update list of available tlds
+    dontneedtlds = True
+    #note: the user may mix tld dependent and independent feeds
     for the_feed in feeds:
         the_feed.open_http_session()
         the_feed.update_supported_tlds()
+        dontneedtlds = dontneedtlds and the_feed.tldindependent
     available_tlds = [set(the_feed.supported_tlds) for the_feed in feeds]
     available_tlds = sorted(list(frozenset().union(*available_tlds)))
     if args['list_supported_tlds']:
@@ -217,18 +220,21 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
         sys.stderr.write("\n")
         exit(6)
     # Here we have the set of available tlds
-    if args['all_tlds']:
-        args['tlds'] = available_tlds
+    if dontneedtlds:
+        args['tlds'] = ['ALL']
     else:
-        # We set up the tld set as the intersection of the ones given in
-        # --tlds and the supported one.
-        # Verify supported tlds list
-        try:
-            args['tlds'] = args['tlds'].split(',')
-        except:
-            print_error_and_exit('You must specifiy the list of tlds to download')
-        tldsset = set(args['tlds'])
-        args['tlds'] = list(tldsset.intersection(set(available_tlds)))
+        if args['all_tlds']:
+            args['tlds'] = available_tlds
+        else:
+            # We set up the tld set as the intersection of the ones given in
+            # --tlds and the supported one.
+            # Verify supported tlds list
+            try:
+                args['tlds'] = args['tlds'].split(',')
+            except:
+                print_error_and_exit('You must specifiy the list of tlds to download')
+            tldsset = set(args['tlds'])
+            args['tlds'] = list(tldsset.intersection(set(available_tlds)))
     if args['tlds'] == []:
         print_error_and_exit('All specified tlds are unsupported.')
     # verify if the output directory exists
@@ -405,20 +411,24 @@ else:
     # Feed has been set up now.
     # For daily feeds, get date range
     # Update list of available tlds
+    dontneedtlds = True
+    #note: the user may mix tld dependent and independent feeds
     for the_feed in feeds:
         the_feed.open_http_session()
         the_feed.update_supported_tlds()
-    available_tlds = [set(the_feed.supported_tlds) for the_feed in feeds]
-    available_tlds = sorted(frozenset().union(*available_tlds))
-    answer = g.multchoicebox('\n'.join([
-        'Choose the TLDs for which you want to load data.',
-        'Note: For formats independent of tlds, '
-        'your choice will be ignored, but you have to choose one.']),
-        windowtitle, available_tlds)
-    if answer is None:
-        exit(6)
-    args['tlds'] = answer
-    print_verbose('Tlds to load: %s' % (str(args['tlds']),))
+        dontneedtlds = dontneedtlds and the_feed.tldindependent
+    if dontneedtlds:
+        args['tlds'] = ['ALL']
+    else:
+        available_tlds = [set(the_feed.supported_tlds) for the_feed in feeds]
+        available_tlds = sorted(frozenset().union(*available_tlds))
+        answer = g.multchoicebox('\n'.join([
+            'Choose the TLDs for which you want to load data.']),
+                                 windowtitle, available_tlds)
+        if answer is None:
+            exit(6)
+        args['tlds'] = answer
+        print_verbose('Tlds to load: %s' % (str(args['tlds']),))
 
     # Choose the output root directory
     answer = g.diropenbox(
@@ -447,10 +457,10 @@ for f in feeds:
 total_failed = list(set(total_failed))
 print_verbose('Download finished.')
 if len(total_failed) > 0:
-    print_verbose('The following URLs have failed (probably they do not exist)')
+    print_verbose('The following URLs have failed (probably they do not exist.)')
     for u in total_failed:
         print_verbose(u)
-    print_verbose('Re-run with the same settings to retry')
+    print_verbose('Re-run with the same settings to retry, but this maybe normal.')
     retcode = 2
 else:
     print_verbose('Everything has been downloaded successfully.')
