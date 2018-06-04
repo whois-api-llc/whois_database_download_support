@@ -19,7 +19,7 @@ import whois_utils.whois_user_interaction as whois_user_interaction
 from whois_utils.whois_user_interaction import *
 
 # GlobalSettings
-VERSION = "0.1.1"
+VERSION = "0.1.2"
 MYNAME = sys.argv[0].replace('./', '')
 MYDIR = os.path.abspath(os.path.dirname(__file__))
 FEEDCONFIGDIR = MYDIR
@@ -350,7 +350,9 @@ else:
         for f in feeds:
             f.set_daily_feed_interval(startdate, enddate)
 
+
     # Check if the ssl key file exists and decide upon auth type
+    answer=False
     if (
         os.path.isfile(args['keyfile']) and
         os.path.isfile(args['crtfile']) and
@@ -365,6 +367,7 @@ else:
     else:
         args['sslauth'] = False
         # Get and verify user acces credentials for the feed
+
     defaultusername = ''
     while not the_feed.loginOK:
         if args['sslauth']:
