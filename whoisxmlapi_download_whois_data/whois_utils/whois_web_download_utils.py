@@ -8,6 +8,7 @@ from HTMLParser import HTMLParser
 import requests
 import os, hashlib, re
 import datetime
+import time
 import whois_user_interaction
 from whois_user_interaction import *
 whois_user_interaction.VERBOSE = True
