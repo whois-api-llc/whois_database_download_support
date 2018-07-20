@@ -316,9 +316,10 @@ class WhoisDataFeed:
             ndays = (self.enddate - self.startdate).days + 1
             self.supported_tlds = []
             for day in range(ndays):
-                datestr = (self.startdate + datetime.timedelta(days=day)).strftime('_%Y_%m_%d')
+                sptldsdate = self.startdate + datetime.timedelta(days=day)
+                datestr = sptldsdate.strftime('_%Y_%m_%d')
                 print_verbose('Getting list of supported tlds on day %d (%s) of %d days.' %(day+1, datestr, ndays))
-                url = self.supported_tlds_url.replace('$_date', datestr)
+                url = self.supported_tlds_url.replace('$_date', datestr).replace('$year',sptldsdate.strftime('%Y')).replace('$month',sptldsdate.strftime('%m'))
                 print_debug("TLD url: %s" % url)
                 supptlds_forday = self.get_url_contents(url).strip().split(',')
                 print_debug("Downloaded info: %s" % str(supptlds_forday))
@@ -329,7 +330,7 @@ class WhoisDataFeed:
             #If there is no supported_tlds for any day, we get the default one without any date
             if self.supported_tlds == None or self.supported_tlds == []:
                 print_verbose('No specific list of tlds found for the dates. Downloading generic list.')
-                url = self.supported_tlds_url.replace('$_date', '')
+                url = self.supported_tlds_url.replace('$_date', '').replace('/$year','').replace('/$month','')
                 self.supported_tlds = self.get_url_contents(url).strip().split(',')
                 self.supported_tlds = list(set(self.supported_tlds))
                 try:
@@ -337,7 +338,7 @@ class WhoisDataFeed:
                 except:
                     pass
             if self.supported_tlds == None or self.supported_tlds == []:
-                print_error_and_exit('Error updating supported tlds.')
+                print_error_and_exit('No tlds found.\n In case of some daily feeds it can be normal:\n it just means that there are no data available for the given day(s).')
             self.supported_tlds = sorted(list(set(self.supported_tlds)))
         else:
             """other feed types: not yet supported"""
@@ -353,17 +354,17 @@ class WhoisDataFeed:
         """Utility to substitute particular data into a download URL"""
         tldunderscore = tld.replace('.', '_')
         if self.dbversion != None:
-            return(url.replace('$dbversion', dbversion).replace('$tldunderscore', tldunderscore).replace('$tld', tld).replace('$_date', date.strftime('_%Y_%m_%d')).replace('$date', date.strftime('%Y_%m_%d')).replace('$minusdate', date.strftime('%Y-%m-%d')))
+            return(url.replace('$dbversion', dbversion).replace('$tldunderscore', tldunderscore).replace('$tld', tld).replace('$_date', date.strftime('_%Y_%m_%d')).replace('$date', date.strftime('%Y_%m_%d')).replace('$minusdate', date.strftime('%Y-%m-%d')).replace('$year', date.strftime('%Y')))
         else:
-            return(url.replace('$tldunderscore', tldunderscore).replace('$tld', tld).replace('$_date', date.strftime('_%Y_%m_%d')).replace('$date', date.strftime('%Y_%m_%d')).replace('$minusdate', date.strftime('%Y-%m-%d')))
+            return(url.replace('$tldunderscore', tldunderscore).replace('$tld', tld).replace('$_date', date.strftime('_%Y_%m_%d')).replace('$date', date.strftime('%Y_%m_%d')).replace('$minusdate', date.strftime('%Y-%m-%d')).replace('$month', date.strftime('%m')).replace('$year', date.strftime('%Y')))
 
     def substitute_mask(self, mask, dbversion, tld, date, filename):
         """Utility to substitute particular data into a string 'mask'. Intended for md5 and sha masks originally"""
         tldunderscore = tld.replace('.', '_')
         if self.dbversion != None:
-            return(mask.replace('$dbversion', dbversion).replace('$tldunderscore', tldunderscore).replace('$tld', tld).replace('$_date', date.strftime('_%Y_%m_%d')).replace('$date', date.strftime('%Y_%m_%d')).replace('$minusdate', date.strftime('%Y-%m-%d')).replace('$filename', filename))
+            return(mask.replace('$dbversion', dbversion).replace('$tldunderscore', tldunderscore).replace('$tld', tld).replace('$_date', date.strftime('_%Y_%m_%d')).replace('$date', date.strftime('%Y_%m_%d')).replace('$minusdate', date.strftime('%Y-%m-%d')).replace('$month', date.strftime('%m')).replace('$filename', filename))
         else:
-            return(mask.replace('$tldunderscore', tldunderscore).replace('$tld', tld).replace('$_date', date.strftime('_%Y_%m_%d')).replace('$date', date.strftime('%Y_%m_%d')).replace('$minusdate', date.strftime('%Y-%m-%d')).replace('$filename', filename))
+            return(mask.replace('$tldunderscore', tldunderscore).replace('$tld', tld).replace('$_date', date.strftime('_%Y_%m_%d')).replace('$date', date.strftime('%Y_%m_%d')).replace('$minusdate', date.strftime('%Y-%m-%d')).replace('$month', date.strftime('%m')).replace('$filename', filename))
 
 
     def download_feed_into_directory(self, tlds, targetdir):

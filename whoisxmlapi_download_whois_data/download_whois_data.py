@@ -236,7 +236,7 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
             tldsset = set(args['tlds'])
             args['tlds'] = list(tldsset.intersection(set(available_tlds)))
     if args['tlds'] == []:
-        print_error_and_exit('All specified tlds are unsupported.')
+        print_error_and_exit('All specified tlds are either unsupported or have no data for the given day(s).')
     # verify if the output directory exists
     if args['output_dir'] is None:
         print_error_and_exit('Please specify the output directory.')
