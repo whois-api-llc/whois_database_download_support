@@ -429,7 +429,7 @@ class WhoisDataFeed:
                                 print_verbose('SUCCESS: downloaded %s.' % (downloadurl))
                                 self.downloaded.append(downloadurl)
                             else:
-                                print_verbose('Download of %s FAILED. It may not exist, or please try again.' % (downloadurl))
+                                print_verbose('Could not download %s. It can be normal if it does not exist.' % (downloadurl))
                                 self.failed.append(downloadurl)
                         #We have to treat archive stuff separately
             if self.download_masks_archive != None:

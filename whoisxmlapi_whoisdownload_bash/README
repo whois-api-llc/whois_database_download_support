@@ -1,5 +1,20 @@
 Changes
 ------
+0.0.19.
+  o Fixed the following archive feeds to download data
+    from the year-named direcotries of past years:
+    	 -domain_names_whois_archive
+	 -domain_names_whois_filtered_reg_country_archive
+	 -domain_names_whois_filtered_reg_country_noproxy_archive
+	 -ngtlds_domain_names_whois_archive
+	 -ngtlds_domain_names_whois_filtered_reg_country_archive
+	 -ngtlds_domain_names_whois_filtered_reg_country_noproxy_archive
+  o Added support for the following data feeds:
+    	 -domain_names_diff_whois_filtered_reg_country2
+	 -cctld_discovered_domain_names_whois_archive
+	 -reported_for_removal
+  o Implemented a "--list-supported-tlds" option
+	 
 0.0.18.
   o Added support for ssl key authentication.
 

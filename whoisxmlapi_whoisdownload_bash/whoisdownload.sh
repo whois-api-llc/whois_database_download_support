@@ -11,7 +11,7 @@ LOGIN_PASSWORD=""
 #
 LANG=C
 LC_ALL=C
-VERSION="0.0.18"
+VERSION="0.0.19"
 VERBOSE="no"
 DEBUG="no"
 MYNAME=$(basename $0)
@@ -37,6 +37,7 @@ KEYFILE="$SCRIPT_DIRECTORY/client.key"
 PRINT_URLS=""
 PRINT_FEEDS=""
 PRINT_FORMATS=""
+LIST_SUPPORTED_TLDS='false'
 
 if [ -f "$HOME/.whoisdownload" ]; then
     source $HOME/.whoisdownload
@@ -96,6 +97,8 @@ function printHelpAndExit()
      --date=YYYY-MM-dd     The date of the files to check. All the date format
                            formats that the date(1) utility accepts are 
                            supported.
+     --list-supported-tlds Do not download files but show the list of supported TLDs in for the given settings.
+                           When used for mutiple feeds, the result is a superset of the supported tlds in all the feeds
 
     Examples:
     $MYNAME --user=demo --password=xxxxxxx --date=2018_01_16 --tld=com --output-dir=./tmp --data-feeds=domain_names_whois --file-format=sql
@@ -108,6 +111,7 @@ function printHelpAndExit()
       o domain_names_dropped_whois
       o domain_names_whois
       o domain_names_whois_filtered_reg_country
+      o domain_names_diff_whois_filtered_reg_country2
       o domain_names_whois_filtered_reg_country_noproxy
       o domain_names_whois_archive
       o domain_names_whois_filtered_reg_country_archive
@@ -126,6 +130,7 @@ function printHelpAndExit()
       o domain_names_whois2
       o cctld_discovered_domain_names_new
       o cctld_discovered_domain_names_whois
+      o cctld_discovered_domain_names_whois_archive
       o cctld_registered_domain_names_new
       o cctld_registered_domain_names_whois
       o cctld_registered_domain_names_dropped
@@ -133,7 +138,8 @@ function printHelpAndExit()
       o whois_database
       o whois_database_combined
       o domain_list_quarterly
-    
+      o reported_for_removal
+
     The following file formats are available:
       o regular or regular_csv
       o simple or simple_csv
@@ -190,7 +196,7 @@ ARGS=$(\
         -l "help,verbose,version,auth-type:,user:,password:,\
 cacert:,sslcert:,sslkey:,tld:,date:,output-dir:,\
 data-feeds:,file-format:,tld-file:,db-version:,n:,dry,\
-print-feeds,print-urls,print-formats" \
+print-feeds,print-urls,print-formats,list-supported-tlds" \
         -- "$@")
 
 
@@ -368,6 +374,11 @@ while true; do
             PRINT_URLS="true"
             ;;
 
+        --list-supported-tlds)
+            shift
+            LIST_SUPPORTED_TLDS="true"
+            ;;
+
         --)
             shift
             break
@@ -418,6 +429,35 @@ if echo $FEEDS | grep --quiet -e "whois_database\|domain_list_quarterly" && [ $D
     exit 1
 fi
 
+
+#$1 : the target date (YYYY_MM_DD)
+#
+#This will be used in archive feeds for year-named subdirecotries.
+#Returns "year/" if the year is not the current
+#
+function yeardir()
+{
+    targetyear=$(echo $1 | head -c 4)
+    thisyear=$(date "+%Y")
+    if [ $targetyear == $thisyear ];then
+	result=""
+    else
+	result=$targetyear"/"
+    fi
+    echo $result
+}
+
+#$1 : the target date (YYYY_MM_DD)
+#
+#This will be used in archive feeds for year-named subdirecotries.
+#Returns "year/month" if the year is not the current
+#
+function yearmonthdir()
+{
+    targetyear=$(echo $1 | head -c 4)
+    targetmonth=$(echo $1 | head -c 7 | tail -c 2)
+    echo ${targetyear}"/"${targetmonth}
+}
 
 # $1: the base url for which we need the auth args
 #
@@ -567,6 +607,11 @@ function bestWhoisSupportedTldsForDate()
     local dirname="$(data_feed_parent_dir $feed)/status"
     local filename="supported_tlds_${date}"
 
+    if [ "$feed" == "reported_for_removal" ];then
+	echo "TLDINDEPENDENT_FEED"
+	return 0
+    fi
+    
     if downloadSupportedTlds $baseUrl $dirname $filename; then
         return 0
     fi
@@ -679,6 +724,7 @@ function data_feed_parent_dir()
          "$feed" == "domain_names_dropped_whois" -o \
          "$feed" == "domain_names_whois" -o \
          "$feed" == "domain_names_whois_filtered_reg_country" -o \
+	 "$feed" == "domain_names_diff_whois_filtered_reg_country2" -o \
          "$feed" == "domain_names_whois_filtered_reg_country_noproxy" -o \
          "$feed" == "domain_names_whois_archive" -o \
          "$feed" == "domain_names_whois_filtered_reg_country_archive" -o \
@@ -698,13 +744,16 @@ function data_feed_parent_dir()
         "$feed" == "ngtlds_domain_names_whois" ]; then
         echo "ngtlds_domain_name_data/${feed#ngtlds_}"
     elif [ "$feed" == "cctld_discovered_domain_names_new" -o \
-        "${feed}" == "cctld_discovered_domain_names_whois" ]; then
+	   "$feed" == "cctld_discovered_domain_names_whois" -o \
+	   "$feed" == "cctld_discovered_domain_names_whois_archive" ]; then
         echo "domain_list/${feed#cctld_discovered_}"
     elif [ "$feed" == "cctld_registered_domain_names_new" -o \
         "$feed" == "cctld_registered_domain_names_dropped" -o  \
         "$feed" == "cctld_registered_domain_names_dropped_whois" -o  \
         "${feed}" == "cctld_registered_domain_names_whois" ]; then
         echo "cctld_domain_name_data/${feed#cctld_registered_}"
+    elif [ "$feed" == "reported_for_removal" ];then
+	echo "report_for_removal_feed"
     else
         printError "data_feed_parent_dir(): feed not handled: '$feed'"
         return 1
@@ -917,6 +966,7 @@ function allFeeds()
         domain_names_dropped_whois \
         domain_names_whois \
         domain_names_whois_filtered_reg_country \
+        domain_names_diff_whois_filtered_reg_country2 \
         domain_names_whois_filtered_reg_country_noproxy \
         domain_names_whois_archive \
         domain_names_whois_filtered_reg_country_archive \
@@ -928,10 +978,12 @@ function allFeeds()
         domain_names_whois2 \
         cctld_discovered_domain_names_new \
         cctld_discovered_domain_names_whois \
+        cctld_discovered_domain_names_whois_archive \
         whois_record_delta_whois \
         whois_record_delta_domain_names_change \
         whois_database \
-        domain_list_quarterly"
+        domain_list_quarterly \
+        reported_for_removal"
 }
 
 #
@@ -950,8 +1002,9 @@ function filePath()
     local tld=$2
     local date=$3
     local date_underscore=$(echo $date | tr '-' '_')
-
-
+    local thisyeardir=$(yeardir $date_underscore)
+    local thisyearmonthdir=$(yearmonthdir ${date_underscore})
+    
     if [ "$feed" == "domain_names_new" ]; then
         echo "domain_name_data/$feed/$tld/$date/add.$tld.csv"
     elif [ "$feed" == "domain_names_dropped" ]; then
@@ -978,22 +1031,24 @@ function filePath()
         elif [ "$FILEFORMAT" = "sql" -o "$FILEFORMAT" = "mysqldump" ]; then
             echo "domain_name_data/$feed/add_mysqldump_${date_underscore}/${tld}/add_mysqldump_${date_underscore}_${tld}.sql.gz"
         fi
+    elif [ "$feed" == "domain_names_diff_whois_filtered_reg_country2" ]; then
+        echo "domain_name_data/$feed/filtered_reg_country_${date_underscore}_${tld}.tar.gz"
     elif [ "$feed" == "domain_names_whois_filtered_reg_country" ]; then
         echo "domain_name_data/$feed/filtered_reg_country_${date_underscore}_${tld}.tar.gz"
     elif [ "$feed" == "domain_names_whois_filtered_reg_country_noproxy" ]; then
         echo "domain_name_data/$feed/filtered_reg_country_noproxy_${date_underscore}_${tld}.tar.gz"
     elif [ "$feed" == "domain_names_whois_archive" ]; then
         if [ "$FILEFORMAT" = "regular" -o "$FILEFORMAT" = "regular_csv" ]; then
-            echo "domain_name_data/$feed/${date_underscore}_${tld}.csv.gz"
+            echo "domain_name_data/$feed/${thisyeardir}${date_underscore}_${tld}.csv.gz"
         elif [ "$FILEFORMAT" = "full" -o "$FILEFORMAT" = "full_csv" ]; then
-            echo "domain_name_data/$feed/full_${date_underscore}_${tld}.csv.gz"
+            echo "domain_name_data/$feed/${thisyeardir}full_${date_underscore}_${tld}.csv.gz"
         elif [ "$FILEFORMAT" = "sql" -o "$FILEFORMAT" = "mysqldump" ]; then
-            echo "domain_name_data/$feed/add_mysqldump_${date_underscore}.tar.gz"
+            echo "domain_name_data/$feed/${thisyeardir}add_mysqldump_${date_underscore}.tar.gz"
         fi
     elif [ "$feed" == "domain_names_whois_filtered_reg_country_archive" ]; then
-        echo "domain_name_data/$feed/filtered_reg_country_${date_underscore}_${tld}.tar.gz"
+        echo "domain_name_data/$feed/${thisyeardir}filtered_reg_country_${date_underscore}_${tld}.tar.gz"
     elif [ "$feed" == "domain_names_whois_filtered_reg_country_noproxy_archive" ]; then
-        echo "domain_name_data/$feed/filtered_reg_country_noproxy_${date_underscore}_${tld}.tar.gz"
+        echo "domain_name_data/$feed/${thisyeardir}filtered_reg_country_noproxy_${date_underscore}_${tld}.tar.gz"
     elif [ "$feed" == "domain_names_whois2" ]; then 
         #
         # This one supports various file formats, some others not.
@@ -1044,16 +1099,16 @@ function filePath()
 
     elif [ "$feed" == "ngtlds_domain_names_whois_archive" ]; then
         if [ "$FILEFORMAT" = "regular" -o "$FILEFORMAT" = "regular_csv" ]; then
-            echo "ngtlds_domain_name_data/domain_names_whois_archive/${date_underscore}_${tld}.csv.gz"
+            echo "ngtlds_domain_name_data/domain_names_whois_archive/${thisyeardir}${date_underscore}_${tld}.csv.gz"
         elif [ "$FILEFORMAT" = "full" -o "$FILEFORMAT" = "full_csv" ]; then
-            echo "ngtlds_domain_name_data/domain_names_whois_archive/full_${date_underscore}_${tld}.csv.gz"
+            echo "ngtlds_domain_name_data/domain_names_whois_archive/${thisyeardir}full_${date_underscore}_${tld}.csv.gz"
         elif [ "$FILEFORMAT" = "sql" -o "$FILEFORMAT" = "mysqldump" ]; then
-            echo "ngtlds_domain_name_data/domain_names_whois_archive/add_mysqldump_${date_underscore}.tar.gz"
+            echo "ngtlds_domain_name_data/domain_names_whois_archive/${thisyeardir}add_mysqldump_${date_underscore}.tar.gz"
         fi
     elif [ "$feed" == "ngtlds_domain_names_whois_filtered_reg_country_archive" ]; then
-        echo "$(data_feed_parent_dir ${feed})/filtered_reg_country_${date_underscore}_${tld}.tar.gz"
+        echo "$(data_feed_parent_dir ${feed})/${thisyearmonthdir}/filtered_reg_country_${date_underscore}_${tld}.tar.gz"
     elif [ "$feed" == "ngtlds_domain_names_whois_filtered_reg_country_noproxy_archive" ]; then
-        echo "$(data_feed_parent_dir ${feed})/filtered_reg_country_noproxy_${date_underscore}_${tld}.tar.gz"
+        echo "$(data_feed_parent_dir ${feed})/${thisyeardir}filtered_reg_country_noproxy_${date_underscore}_${tld}.tar.gz"
 
 
     elif [ "$feed" == "cctld_discovered_domain_names_new" ]; then
@@ -1066,7 +1121,14 @@ function filePath()
         elif [ "$FILEFORMAT" = "sql" -o "$FILEFORMAT" = "mysqldump" ]; then
             echo "domain_list/domain_names_whois/add_mysqldump_${date_underscore}/${tld}/add_mysqldump_${date_underscore}_${tld}.sql.gz"
         fi 
-
+    elif [ "$feed" == "cctld_discovered_domain_names_whois_archive" ]; then
+        if [ "$FILEFORMAT" = "regular" -o "$FILEFORMAT" = "regular_csv" ]; then
+            echo "domain_list/domain_names_whois_archive/${thisyearmonthdir}/${date_underscore}_${tld}.csv.gz"
+        elif [ "$FILEFORMAT" = "full" -o "$FILEFORMAT" = "full_csv" ]; then
+            echo "domain_list/domain_names_whois_archive/${thisyearmonthdir}/full_${date_underscore}_${tld}.csv.gz"
+        elif [ "$FILEFORMAT" = "sql" -o "$FILEFORMAT" = "mysqldump" ]; then
+            echo "domain_list/domain_names_whois_archive/${thisyearmonthdir}/add_mysqldump_${date_underscore}/${tld}/add_mysqldump_${date_underscore}_${tld}.sql.gz"
+        fi 
     elif [ "$feed" == "cctld_registered_domain_names_new" ]; then
         echo "cctld_domain_name_data/domain_names_new/$date/add.$tld.csv"
     elif [ "$feed" == "cctld_registered_domain_names_whois" ]; then
@@ -1087,7 +1149,8 @@ function filePath()
         elif [ "$FILEFORMAT" = "sql" -o "$FILEFORMAT" = "mysqldump" ]; then
             echo "cctld_domain_name_data/domain_names_whois/dropped_mysqldump_${date_underscore}_${tld}.sql.gz"
         fi 
-
+    elif [ "$feed" == "reported_for_removal" ]; then
+	echo "report_for_removal_feed/whoisxmlapi_report_for_removal_${date_underscore}.tar.gz"
     #
     # From this point the datasources are at http://www.domainwhoisdatabase.com
     #
@@ -1142,7 +1205,8 @@ function baseUrl()
         # http://www.domainwhoisdatabase.com/whois_database/v14/database_dump/
         echo "$URLHEAD_D"
     elif [ "$feed" == "cctld_discovered_domain_names_new" -o \
-        "${feed}" == "cctld_discovered_domain_names_whois" ]; then
+	   "${feed}" == "cctld_discovered_domain_names_whois" -o \
+	   "${feed}" == "cctld_discovered_domain_names_whois_archive" ]; then
         echo "$URLHEAD_D"
     else
         echo "$URLHEAD_B"
@@ -1458,6 +1522,7 @@ function downloadForTld()
             "${feed}" == "ngtlds_domain_names_whois_archive" -o \
             "${feed}" == "domain_names_whois2" -o \
             "${feed}" == "cctld_discovered_domain_names_whois" -o \
+	    "${feed}" == "cctld_discovered_domain_names_whois_archive" -o \
             "${feed}" == "cctld_registered_domain_names_whois" -o \
             "${feed}" == "cctld_registered_domain_names_dropped_whois" -o \
             "${feed}" == "whois_database" -o \
@@ -1659,6 +1724,7 @@ else
     done
 fi
 
+
 #
 # If we have an output dir we create it and jump there.
 #
@@ -1672,6 +1738,18 @@ if [ "$OUTPUT_DIR" ]; then
     fi
 
     pushd "$OUTPUT_DIR" >/dev/null
+fi
+
+# We handle the option --list-supported-tlds
+# If this is set, we list the tlds for all the feeds and exit
+
+if [ "$LIST_SUPPORTED_TLDS" == "true" ];then
+    echo "Available tlds:"
+    for feed in $FEEDS;do       
+	allTlds "$feed" "$DATE" 2>/dev/null
+    done | tr " " "\n" | sort -u | tr "\n" "," | sed -e "s/,/,\ /g"
+    echo ""
+    exit 6
 fi
 
 #

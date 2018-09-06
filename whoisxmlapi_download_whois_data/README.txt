@@ -4,7 +4,7 @@ Whois data download utility
 
 download_whois_data.py
 
-Release version 0.0.9 dated 2018-02-23.
+Release version 0.1.5 dated 2018-09-06.
 
 Copyright (c) 2010-2017 Whois API LLC,  http://www.whoisxmlapi.com
 -------------------------------------------------------------------

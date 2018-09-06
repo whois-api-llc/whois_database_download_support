@@ -19,7 +19,7 @@ import whois_utils.whois_user_interaction as whois_user_interaction
 from whois_utils.whois_user_interaction import *
 
 # GlobalSettings
-VERSION = "0.1.4"
+VERSION = "0.1.5"
 MYNAME = sys.argv[0].replace('./', '')
 MYDIR = os.path.abspath(os.path.dirname(__file__))
 FEEDCONFIGDIR = MYDIR
@@ -173,7 +173,7 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
                 if enddate < startdate:
                     print_error_and_exit('End date must be later than start date.')
             else:
-                print_error_and_exit('End date must be in the format, in the format YYYYMMDD')
+                print_error_and_exit('End date must be in the format YYYYMMDD')
         else:
             enddate = None
         # set up the date intervals of the feeds

@@ -87,7 +87,7 @@ def web_download_and_check_file(url, md5url, session, output_dir, maxtries):
             print_verbose('File downloaded but no md5 sum. Unverified. This can be normal.')
             gotit = True
         else:
-            print_verbose('File not found. Giving up.')
+            print_verbose('File not found, it may not exist on the server.')
             gotit = False
             giveup = True
         ntries += 1
