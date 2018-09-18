@@ -11,7 +11,7 @@ LOGIN_PASSWORD=""
 #
 LANG=C
 LC_ALL=C
-VERSION="0.0.19"
+VERSION="0.0.20"
 VERBOSE="no"
 DEBUG="no"
 MYNAME=$(basename $0)
@@ -439,7 +439,7 @@ function yeardir()
 {
     targetyear=$(echo $1 | head -c 4)
     thisyear=$(date "+%Y")
-    if [ $targetyear == $thisyear ];then
+    if [ "$targetyear" == "$thisyear" ];then
 	result=""
     else
 	result=$targetyear"/"
@@ -508,7 +508,7 @@ function downloadSupportedTlds()
         printError "[NOT FOUND]"
         rm -f wget.log
         popd >/dev/null
-        return 1
+        return 2
     elif grep --quiet "Password Authentication Failed" wget.log; then
         printError "[AUTH FAILED]"
         rm -f wget.log
@@ -1265,13 +1265,13 @@ function downloadWithWget()
 
     if grep --quiet "404 Not Found" wget.log; then
         echo "[NOT FOUND]"
-        retcode=1
+        retcode=2
     elif grep --quiet "Password Authentication Failed" wget.log; then
         echo "[AUTH FAILED]"
-        retcode=2
+        retcode=1
     elif grep --quiet "OpenSSL: error" wget.log; then
         printError "[OPENSSL ERROR]"
-	retcode=2
+	retcode=1
     elif grep --quiet "403 Forbidden" wget.log; then
         echo "[NONEXISTENT OR UNAVAILABLE RESOURCE]"
         retcode=3	
@@ -1452,14 +1452,19 @@ function downloadOneFile()
         $(wget_auth_args $url) \
         $fullurl 2>wget.log >wget.log
 
+    retcode=0
     if grep --quiet "404 Not Found" wget.log; then
         echo "[NOT FOUND]"
+	retcode=2
     elif grep --quiet "Password Authentication Failed" wget.log; then
         echo "[AUTH FAILED]"
+	retcode=1
     elif grep --quiet "OpenSSL: error" wget.log; then
         echo "[OPENSSL ERROR]"
+	retcode=1
     elif grep --quiet "403 Forbidden" wget.log; then
         echo "[NONEXISTENT OR UNAVAILABLE RESOURCE]"
+	retcode=1
     else
         echo "[OK]"
     fi
@@ -1467,6 +1472,7 @@ function downloadOneFile()
     rm wget.log
 
     popd >/dev/null
+    return $retcode
 }
 
 #
@@ -1563,7 +1569,7 @@ function downloadForFeed()
     local feed=$1
     local tld=$2
     local date=$3
-
+    
     #
     # If no feeds are provided we have to load all possible feeds.
     #
@@ -1571,17 +1577,28 @@ function downloadForFeed()
         feed=$(allFeeds)
     fi
 
+    retcode=0
     for oneFeed in $feed; do
         if [ "${oneFeed}" == "whois_database" -o "${oneFeed}" == "domain_list_quarterly" \
             -o "${oneFeed}" == "whois_database_combined" ]; then
             downloadForTld "$oneFeed" "$tld" "$date"
+	    newretcode=$?
+	    if [ "$newretcode" != "0" ];then
+		retcode=$newretcode
+	    fi
         else
             local check_feed=$(data_feed_parent_dir "${oneFeed}")
             if [ "${check_feed}" != "" ]; then
                 downloadForTld "$oneFeed" "$tld" "$date"
+		newretcode=$?
+		if [ "$newretcode" != "0" ];then
+		    retcode=$newretcode
+		fi
             fi
         fi
     done
+
+    return $retcode
 
 }
 
@@ -1595,12 +1612,21 @@ function downloadForDate()
     local tld=$2
     local date=$3
 
+    retcode=0
     if [ -z "$NDAYS" ]; then
         if [ -z "$date" ]; then
             downloadForFeed "$feed" "$tld" "$oneDate"
+	    gotretcode=$?
+	    if [ "$gotretcode" != 0 ];then
+		retcode=$gotretcode
+	    fi	    
         else
             for oneDate in $date; do
                 downloadForFeed "$feed" "$tld" "$oneDate"
+		gotretcode=$?
+		if [ "$gotretcode" != 0 ];then
+		    retcode=$gotretcode
+		fi
             done
         fi
     else
@@ -1612,15 +1638,19 @@ function downloadForDate()
         fi
 
         printVerbose "Downloading data for $ndays days."
-
+	
         for (( day=0; day<ndays; day++ ))
         do
             thisDate=$(date -d "${DATE}+${day} days" "+%Y-%m-%d")
             downloadForFeed "$feed" "$tld" "$thisDate"
-        done
-
-        exit 1
+	    gotretcode=$?
+	    if [ "$gotretcode" != 0 ];then
+		retcode=$gotretcode
+	    fi
+        done	
     fi
+
+    exit $retcode
 }
 
 #

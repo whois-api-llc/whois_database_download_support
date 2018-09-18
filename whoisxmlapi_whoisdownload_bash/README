@@ -1,5 +1,13 @@
 Changes
 ------
+0.0.20.
+  o Fixed some minor bugs
+  o Fixed some return codes, to be more coherent with the python version:
+    Now
+     - return code 2 is for a file which is not found on the server (previously returned 0 or 2 sometimes)
+     - in case of success return code 0 is returned (in case of daily feeds it was buggy)
+     - return code 1 and those greater than 2 are for abnormal termination
+
 0.0.19.
   o Fixed the following archive feeds to download data
     from the year-named direcotries of past years:
