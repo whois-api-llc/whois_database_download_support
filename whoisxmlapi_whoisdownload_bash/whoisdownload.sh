@@ -11,7 +11,7 @@ LOGIN_PASSWORD=""
 #
 LANG=C
 LC_ALL=C
-VERSION="0.0.20"
+VERSION="0.0.21"
 VERBOSE="no"
 DEBUG="no"
 MYNAME=$(basename $0)
@@ -404,15 +404,19 @@ if [ $AUTHTYPE == "password" ];then
     URLHEAD_D="http://www.domainwhoisdatabase.com"
 fi
 if [ $AUTHTYPE == "ssl" ];then
-    if [[ ! -f  $CACERTFILE ]];then
+    CACERTFILE=$(readlink -m $CACERTFILE)
+    CERTFILE=$(readlink -m $CERTFILE)
+    KEYFILE=$(readlink -m $KEYFILE)
+
+    if [[ ! -f  "$CACERTFILE" ]];then
 	printError "CA cert file $CACERTFILE does not exist."
 	exit 6
     fi;
-    if [[ ! -f  $CERTFILE ]];then
+    if [[ ! -f  "$CERTFILE" ]];then
 	printError "User cert file $CERTFILE does not exist."
 	exit 6
     fi;
-    if [[ ! -f  $KEYFILE ]];then
+    if [[ ! -f  "$KEYFILE" ]];then
 	printError "SSL key file $KEYFILE does not exist."
 	exit 6
     fi;
@@ -466,12 +470,12 @@ function yearmonthdir()
 function wget_auth_args()
 {
     local base_url="$1"
-
+    generic_options="--retry-connrefused --tries=3 --read-timeout=30 --timestamping"
     if echo $base_url | grep -q -e "^$URLHEAD_B";then
-	echo $WGET_AUTH_ARGS_B
+	echo $WGET_AUTH_ARGS_B $generic_options
 	return 0
     elif echo $base_url | grep -q -e "^$URLHEAD_D";then
-	echo $WGET_AUTH_ARGS_D
+	echo $WGET_AUTH_ARGS_D $generic_options
 	return 0
     else
 	printError "Base URL '$base_url' not supported."
@@ -502,28 +506,40 @@ function downloadSupportedTlds()
    
     wget \
         $(wget_auth_args $baseUrl) \
-        $fullurl 2>wget.log >wget.log
+        $fullurl --output-file=wget.log
+
+    retcode=$?
     
     if grep --quiet "404 Not Found" wget.log; then
         printError "[NOT FOUND]"
         rm -f wget.log
         popd >/dev/null
         return 2
-    elif grep --quiet "Password Authentication Failed" wget.log; then
-        printError "[AUTH FAILED]"
-        rm -f wget.log
-        popd >/dev/null
-        return 1
     elif grep --quiet "OpenSSL: error" wget.log; then
         printError "[OPENSSL ERROR]"
         rm -f wget.log
         popd >/dev/null
         return 1
     elif  grep --quiet "403 Forbidden" wget.log; then
-        echo "[NONEXISTENT OR UNAVAILABLE RESOURCE]"
+        printError "[NONEXISTENT OR UNAVAILABLE RESOURCE]"
         rm -f wget.log
         popd >/dev/null
         return 1
+    elif [[ ${retcode} -ne 0 ]]; then
+        case ${retcode} in
+            1) printError "[Generic error code]" ;;
+            2) printError "[Wget parse error]" ;;
+            3) printError "[File I/O error]" ;;
+            4) printError "[Network failure]" ;;
+            5) printError "[SSL verification failure]" ;;
+            6) printError "[AUTH FAILED]" ;;
+            7) printError "[Protocol errors]" ;;
+            8) printError "[Server issued an error response]" ;;
+            *) printError "wget: ${retcode} error code" ;;
+        esac
+        rm -f wget.log
+        popd >/dev/null
+        return ${retcode}
     else
         printMessageNl "[OK]" 
         cat $filename | tr ',' ' '
@@ -1224,7 +1240,6 @@ function downloadWithWget()
     local baseUrl="$1"
     local dirname="$2"
     local filename="$3"
-    local retcode=0
 
     # Notifying the user. Full url is more informative but a bit long...
     if [ "$DEBUG" == "yes" ]; then
@@ -1232,12 +1247,7 @@ function downloadWithWget()
     else
         echo -n "$dirname/$filename  "
     fi
-
-    if [ -e "$dirname/$filename" ]; then
-        echo "[FILE EXISTS]"
-        return 0
-    fi
-    
+  
     mkdir -p $dirname
 
     #
@@ -1253,7 +1263,7 @@ function downloadWithWget()
     pushd $dirname >/dev/null
     wget \
         $(wget_auth_args $baseUrl) \
-        "$baseUrl/$dirname/$filename" 2>wget.log >wget.log
+        "$baseUrl/$dirname/$filename" --output-file=wget.log
 
     retcode=$?
 
@@ -1266,15 +1276,27 @@ function downloadWithWget()
     if grep --quiet "404 Not Found" wget.log; then
         echo "[NOT FOUND]"
         retcode=2
-    elif grep --quiet "Password Authentication Failed" wget.log; then
-        echo "[AUTH FAILED]"
-        retcode=1
     elif grep --quiet "OpenSSL: error" wget.log; then
         printError "[OPENSSL ERROR]"
-	retcode=1
+	    retcode=1
     elif grep --quiet "403 Forbidden" wget.log; then
         echo "[NONEXISTENT OR UNAVAILABLE RESOURCE]"
-        retcode=3	
+        retcode=3
+    elif [[ ${retcode} -ne 0 ]]; then
+        case ${retcode} in
+            1) printError "[Generic error code]" ;;
+            2) printError "[Wget parse error]" ;;
+            3) printError "[File I/O error]" ;;
+            4) printError "[Network failure]" ;;
+            5) printError "[SSL verification failure]" ;;
+            6) printError "[AUTH FAILED]" ;;
+            7) printError "[Protocol errors]" ;;
+            8) printError "[Server issued an error response]" ;;
+            *) printError "wget: ${res_code} error code" ;;
+        esac
+        rm -f wget.log
+        popd >/dev/null
+        return ${retcode}
     else
         echo "[OK]"
         retcode=0
@@ -1429,11 +1451,6 @@ function downloadOneFile()
         echo -n "$dirname/$filename  "
     fi
 
-    if [ -e "$file" ]; then
-        echo "[FILE EXISTS]"
-        return 0
-    fi
-
     mkdir -p $dirname
 
     #
@@ -1442,31 +1459,43 @@ function downloadOneFile()
     #
     if [ "$DRY_RUN" == "yes" ]; then
         touch "$dirname/$filename"
-        echo "[DRY RUN]"
+        printDebug "[DRY RUN]"
         return 0
     fi
 
     pushd $dirname >/dev/null
-
     wget \
         $(wget_auth_args $url) \
-        $fullurl 2>wget.log >wget.log
-
-    retcode=0
+        $fullurl --output-file=wget.log
+    retcode=$?
     if grep --quiet "404 Not Found" wget.log; then
-        echo "[NOT FOUND]"
-	retcode=2
-    elif grep --quiet "Password Authentication Failed" wget.log; then
-        echo "[AUTH FAILED]"
-	retcode=1
+        printError "[NOT FOUND]"
+        retcode=2
     elif grep --quiet "OpenSSL: error" wget.log; then
-        echo "[OPENSSL ERROR]"
-	retcode=1
+        printError "[OPENSSL ERROR]"
+        retcode=1
     elif grep --quiet "403 Forbidden" wget.log; then
-        echo "[NONEXISTENT OR UNAVAILABLE RESOURCE]"
-	retcode=1
+        printError "[NONEXISTENT OR UNAVAILABLE RESOURCE]"
+        retcode=1
+    elif grep --quiet "304 Not Modified" wget.log; then
+        printError "[FILE EXISTS]"
+    elif [[ ${retcode} -ne 0 ]]; then
+        case ${retcode} in
+            1) printError "[Generic error code]" ;;
+            2) printError "[Wget parse error]" ;;
+            3) printError "[File I/O error]" ;;
+            4) printError "[Network failure]" ;;
+            5) printError "[SSL verification failure]" ;;
+            6) printError "[AUTH FAILED]" ;;
+            7) printError "[Protocol errors]" ;;
+            8) printError "[Server issued an error response]" ;;
+            *) printError "wget: ${res_code} error code" ;;
+        esac
+        rm -f wget.log
+        popd >/dev/null
+        return ${retcode}
     else
-        echo "[OK]"
+        printMessageNl "[OK]"
     fi
 
     rm wget.log
@@ -1582,18 +1611,16 @@ function downloadForFeed()
         if [ "${oneFeed}" == "whois_database" -o "${oneFeed}" == "domain_list_quarterly" \
             -o "${oneFeed}" == "whois_database_combined" ]; then
             downloadForTld "$oneFeed" "$tld" "$date"
-	    newretcode=$?
-	    if [ "$newretcode" != "0" ];then
-		retcode=$newretcode
-	    fi
+	       newretcode=$?
+    	    if [ "$newretcode" != "0" ];then
+    		  retcode=$newretcode
+    	    fi
         else
             local check_feed=$(data_feed_parent_dir "${oneFeed}")
             if [ "${check_feed}" != "" ]; then
                 downloadForTld "$oneFeed" "$tld" "$date"
-		newretcode=$?
-		if [ "$newretcode" != "0" ];then
-		    retcode=$newretcode
-		fi
+        		newretcode=$?
+        		[ "$newretcode" != "0" ] && retcode=$newretcode
             fi
         fi
     done
@@ -1643,10 +1670,8 @@ function downloadForDate()
         do
             thisDate=$(date -d "${DATE}+${day} days" "+%Y-%m-%d")
             downloadForFeed "$feed" "$tld" "$thisDate"
-	    gotretcode=$?
-	    if [ "$gotretcode" != 0 ];then
-		retcode=$gotretcode
-	    fi
+            gotretcode=$?
+            [[ "$gotretcode" != 0 ]] && retcode=$gotretcode
         done	
     fi
 

@@ -72,13 +72,29 @@ to the options of the script when you use it. You will not need the
 --user and --password options then.
 
 The default location of the files client.crt, client.key and
-whoisxmlapi.ca is the same directory as your script. You may move
-these files elsewhere, and specify their location with the respective
-options, e.g.
+whoisxmlapi.ca is the same directory as your script.
+
+You may move these files elsewhere, and specify their location with
+the respective options, e.g.
 
 --cacert=/home/myuser/mycustomdir/whoisxmlapi.ca
 --sslcert=/home/myuser/mycustomdir/client.crt
 --sslkey=/home/myuser/mycustomdir/client.key
 
 You may also rename these files and specify them with their new names
-using the above options.
+using the above options.  As an alternative to the command-line
+options, you may specify the location of the respective files by
+setting the variables
+AUTHTYPE="ssl"
+and the variables
+CACERTFILE
+CERTFILE
+KEYFILE
+to the location of the auth files in your
+~/.whoisdownload.sh
+file if you prefer this approach. 
+IMPORTANT: the string providing file locations as well as those
+possibly given as values to variables specifying full path should be
+preferably full absolute paths and they should resolve properly by the
+"realpath" command on your system. Hence, for instance, do not use "~"
+to refer to your home directory in these path strings.

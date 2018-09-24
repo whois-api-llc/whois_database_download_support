@@ -1,5 +1,12 @@
 Changes
 ------
+
+0.0.21.
+  o More informative error messages
+  o Minor code simplification
+  o Fixed a but affecting explicit specification of ssl auth files
+    in command-line or in variables
+  
 0.0.20.
   o Fixed some minor bugs
   o Fixed some return codes, to be more coherent with the python version:
