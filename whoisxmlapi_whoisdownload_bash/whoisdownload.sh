@@ -11,8 +11,9 @@ LOGIN_PASSWORD=""
 #
 LANG=C
 LC_ALL=C
-VERSION="0.0.21"
+VERSION="0.0.22"
 VERBOSE="no"
+WGETPROGRESS=""
 DEBUG="no"
 MYNAME=$(basename $0)
 TLD=""
@@ -76,6 +77,7 @@ function printHelpAndExit()
      -h, --help            Print this help and exit.
      -v, --version         Print version information and exit.
      --verbose             Print more messages.
+     --show-progress       Show a progress bar when downloading the files
      --data-feeds=FEEDS    One or more data feeds to download.
      --tld=TLD             One or more top level domains to download.
      --tld-file=FILENAME   Load the list of TLDs from a text file.
@@ -193,7 +195,7 @@ function printDebug()
 
 ARGS=$(\
     getopt -o hv \
-        -l "help,verbose,version,auth-type:,user:,password:,\
+        -l "help,verbose,show-progress,version,auth-type:,user:,password:,\
 cacert:,sslcert:,sslkey:,tld:,date:,output-dir:,\
 data-feeds:,file-format:,tld-file:,db-version:,n:,dry,\
 print-feeds,print-urls,print-formats,list-supported-tlds" \
@@ -217,6 +219,11 @@ while true; do
             VERBOSE="true"
             ;;
 
+        --show-progress)
+            shift
+	    WGETPROGRESS="--show-progress"
+            ;;
+	
         -v|--version)
             shift
             printVersionAndExit
@@ -1261,7 +1268,7 @@ function downloadWithWget()
     fi
 
     pushd $dirname >/dev/null
-    wget \
+    wget $WGETPROGRESS\
         $(wget_auth_args $baseUrl) \
         "$baseUrl/$dirname/$filename" --output-file=wget.log
 
@@ -1322,7 +1329,8 @@ function downloadMultiFile()
     local n=0
 
     #if not dry run, load until the next file is found, otherwise go till DRY_RUN_MULTIFILE_LIMIT
-    while [ "$DRY_RUN" = "no" -o  \( $n -lt "$DRY_RUN_MULTIFILE_LIMIT" \) ]; do
+    printVerbose "Downloading multiple files"
+    while true; do
         if [ "$FILEFORMAT" = "regular" -o "$FILEFORMAT" = "regular_csv" ]; then
             fileName=$(printf "regular-%s.tar.gz.%04d" ${DATABASEVERSION} $n)
         elif [ "$FILEFORMAT" = "full" -o "$FILEFORMAT" = "full_csv" ]; then
@@ -1338,8 +1346,16 @@ function downloadMultiFile()
             break
         fi
 
+	printVerbose "Trying to download the next file if it exists."
         downloadWithWget "$url" "$dir" "${fileName}" 
-        if [ $? -ne 0 ]; then
+        if [[ ( $? -ne 0 && "$DRY_RUN" = "no" ) || ( $((n+1)) -ge "$DRY_RUN_MULTIFILE_LIMIT" && "$DRY_RUN" = "yes" ) ]]; then
+	    if [ $n -gt 0 ];then 
+		printVerbose "No next file, this is probably normal, we have all of them."
+		multifileretval=0
+	    else
+		printError "No next file but we had one file only. It is suspicious."
+		multifileretval=2
+	    fi
             break;
         fi
         
@@ -1348,6 +1364,7 @@ function downloadMultiFile()
 
         n=$((n+1))
     done
+    return ${multifileretval}
 }
 
 
@@ -1464,7 +1481,7 @@ function downloadOneFile()
     fi
 
     pushd $dirname >/dev/null
-    wget \
+    wget $WGETPROGRESS \
         $(wget_auth_args $url) \
         $fullurl --output-file=wget.log
     retcode=$?
@@ -1519,8 +1536,9 @@ function downloadForTld()
     local date=$3
 
     if [ "$feed" == "whois_database_combined" ]; then
-        downloadMultiFile "$feed" 
-        return $?
+        downloadMultiFile "$feed"
+	return_status=$?
+        return $return_status
     fi
 
     if [ "$feed" == "whois_database" ]; then
@@ -1598,7 +1616,7 @@ function downloadForFeed()
     local feed=$1
     local tld=$2
     local date=$3
-    
+
     #
     # If no feeds are provided we have to load all possible feeds.
     #
@@ -1606,27 +1624,30 @@ function downloadForFeed()
         feed=$(allFeeds)
     fi
 
-    retcode=0
+    myretcode=0
     for oneFeed in $feed; do
         if [ "${oneFeed}" == "whois_database" -o "${oneFeed}" == "domain_list_quarterly" \
             -o "${oneFeed}" == "whois_database_combined" ]; then
             downloadForTld "$oneFeed" "$tld" "$date"
 	       newretcode=$?
-    	    if [ "$newretcode" != "0" ];then
-    		  retcode=$newretcode
-    	    fi
+    	       [ "$newretcode" != "0" ] && myretcode=$newretcode
         else
-            local check_feed=$(data_feed_parent_dir "${oneFeed}")
+
+	    check_feed=$(data_feed_parent_dir "${oneFeed}")
+	    local check_feed_code=$?
+	    if [[ $check_feed_code != 0 || $check_feed == "" ]];then
+		printError "Invalid feed: ${oneFeed}."
+		return 1
+	    fi
+
             if [ "${check_feed}" != "" ]; then
                 downloadForTld "$oneFeed" "$tld" "$date"
-        		newretcode=$?
-        		[ "$newretcode" != "0" ] && retcode=$newretcode
+               newretcode=$?
+               [ "$newretcode" != "0" ] && myretcode=$newretcode
             fi
         fi
     done
-
-    return $retcode
-
+    return $myretcode
 }
 
 #
@@ -1639,20 +1660,20 @@ function downloadForDate()
     local tld=$2
     local date=$3
 
-    retcode=0
+    mainretcode=0
     if [ -z "$NDAYS" ]; then
         if [ -z "$date" ]; then
             downloadForFeed "$feed" "$tld" "$oneDate"
 	    gotretcode=$?
-	    if [ "$gotretcode" != 0 ];then
-		retcode=$gotretcode
-	    fi	    
+	    if [ "$gotretcode" != "0" ];then
+		mainretcode=$gotretcode
+	    fi
         else
             for oneDate in $date; do
                 downloadForFeed "$feed" "$tld" "$oneDate"
 		gotretcode=$?
-		if [ "$gotretcode" != 0 ];then
-		    retcode=$gotretcode
+		if [ "$gotretcode" != "0" ];then
+		    mainretcode=$gotretcode
 		fi
             done
         fi
@@ -1671,11 +1692,12 @@ function downloadForDate()
             thisDate=$(date -d "${DATE}+${day} days" "+%Y-%m-%d")
             downloadForFeed "$feed" "$tld" "$thisDate"
             gotretcode=$?
-            [[ "$gotretcode" != 0 ]] && retcode=$gotretcode
+            [[ "$gotretcode" != 0 ]] && mainretcode=$gotretcode
         done	
     fi
 
-    exit $retcode
+    #here we are done
+    exit $mainretcode
 }
 
 #

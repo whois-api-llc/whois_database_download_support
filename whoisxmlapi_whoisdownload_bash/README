@@ -1,6 +1,14 @@
 Changes
 ------
 
+0.0.22.
+  o More consistent messages when downloading multipart archives
+    especially from the whois_database_combined feed
+    If there is just one file in the feed, the return code will be 2 now,
+    otherwise it is zero.
+  o Fixed to give 1 (instead of 0) return code for unhandled feed
+  o Introduced a --show-progress option to have progress bars for the downloads
+
 0.0.21.
   o More informative error messages
   o Minor code simplification
