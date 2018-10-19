@@ -1,6 +1,12 @@
 Changes
 ------
 
+0.0.23.
+  o Messages and return codes for whois_database_combined feed
+    revised again
+  o Introduced the "thin" option to download data for tlds com and net
+    from whois_database
+    
 0.0.22.
   o More consistent messages when downloading multipart archives
     especially from the whois_database_combined feed

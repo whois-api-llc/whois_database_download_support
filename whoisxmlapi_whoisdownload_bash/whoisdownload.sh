@@ -11,7 +11,7 @@ LOGIN_PASSWORD=""
 #
 LANG=C
 LC_ALL=C
-VERSION="0.0.22"
+VERSION="0.0.23"
 VERBOSE="no"
 WGETPROGRESS=""
 DEBUG="no"
@@ -25,6 +25,7 @@ OUTPUT_DIR=""
 DRY_RUN="no"
 DRY_RUN_MULTIFILE_LIMIT=10
 FILEFORMAT="regular"
+THIN='false'
 #note: database version has to be specified explicitly
 DATABASEVERSION="UNSPECIFIED"
 START_DIRECTORY=$PWD
@@ -93,6 +94,8 @@ function printHelpAndExit()
                            Defaults to client.key next to the script.
      --output-dir=PATH     The output directory.
      --file-format=FORMAT  Choose the given file format where available.
+     --thin                Downlad thin whois data. 
+                           Only for feed "whois_database". 
      --db-version=STRING   Set the version to download. 
                            Required for quarterly feeds. Format: vNN, e.g. v19
      --n=INTEGER           Sets how many days to download.
@@ -197,7 +200,7 @@ ARGS=$(\
     getopt -o hv \
         -l "help,verbose,show-progress,version,auth-type:,user:,password:,\
 cacert:,sslcert:,sslkey:,tld:,date:,output-dir:,\
-data-feeds:,file-format:,tld-file:,db-version:,n:,dry,\
+data-feeds:,file-format:,thin,tld-file:,db-version:,n:,dry,\
 print-feeds,print-urls,print-formats,list-supported-tlds" \
         -- "$@")
 
@@ -283,7 +286,12 @@ while true; do
             FILEFORMAT=$1
             shift
             ;;
-        
+	
+        --thin)
+            shift
+            THIN="true"
+            ;;
+	
         --db-version)
             shift
 	    #format check
@@ -440,6 +448,20 @@ if echo $FEEDS | grep --quiet -e "whois_database\|domain_list_quarterly" && [ $D
     exit 1
 fi
 
+if [[ "$THIN" == "true" ]];then
+    if [[ "$FEEDS" != "whois_database" ]];then
+	printError "The option --thin can be only used with the whois_datbase feed."
+	exit 1
+    fi
+    if [[ -z $TLD ]];then
+	printError "Tlds should be specified for --thin, they can be only net and/or com."
+	exit 1
+    fi
+    if echo $TLD | sed -e s/com//g | sed -e s/net//g | grep -q -e [a-z];then
+	printError "Thin data are only for the TLDs com and net."
+	exit 1
+    fi
+fi
 
 #$1 : the target date (YYYY_MM_DD)
 #
@@ -1177,7 +1199,8 @@ function filePath()
     #
     # From this point the datasources are at http://www.domainwhoisdatabase.com
     #
-    elif [ "$feed" == "whois_database" ]; then
+	#Not thin
+    elif [ "$feed" == "whois_database" -a "$THIN" == "false" ]; then
         if [ "$FILEFORMAT" = "regular" -o "$FILEFORMAT" = "regular_csv" ]; then
             echo "$feed/$DATABASEVERSION/csv/tlds/regular/csvs.${tld}.regular.tar.gz"
         elif [ "$FILEFORMAT" = "full" -o "$FILEFORMAT" = "full_csv" ]; then
@@ -1186,6 +1209,15 @@ function filePath()
             echo "$feed/$DATABASEVERSION/csv/tlds/simple/csvs.${tld}.simple.tar.gz"
         elif [ "$FILEFORMAT" = "sql" -o "$FILEFORMAT" = "mysqldump" ]; then
             echo "$feed/$DATABASEVERSION/database_dump/mysqldump/${tld}/whoiscrawler_${DATABASEVERSION}_${tld}_mysql.sql.gz"
+        fi
+	#thin
+    elif [ "$feed" == "whois_database" -a "$THIN" == "true" ]; then
+        if [ "$FILEFORMAT" = "regular" -o "$FILEFORMAT" = "regular_csv" ]; then
+            echo "$feed/$DATABASEVERSION/csv/tlds/regular/csvs.${tld}.regular.thin.tar.gz"
+        elif [ "$FILEFORMAT" = "full" -o "$FILEFORMAT" = "full_csv" ]; then
+            echo "$feed/$DATABASEVERSION/csv/tlds/full/csvs.${tld}.full.thin.tar.gz"
+        elif [ "$FILEFORMAT" = "simple" -o "$FILEFORMAT" = "simple_csv" ]; then
+            echo "$feed/$DATABASEVERSION/csv/tlds/simple/csvs.${tld}.simple.thin.tar.gz"
         fi
     elif [ "$feed" == "whois_database_combined" ]; then
         if [ "$FILEFORMAT" = "regular" -o "$FILEFORMAT" = "regular_csv" ]; then
@@ -1347,11 +1379,15 @@ function downloadMultiFile()
         fi
 
 	printVerbose "Trying to download the next file if it exists."
-        downloadWithWget "$url" "$dir" "${fileName}" 
-        if [[ ( $? -ne 0 && "$DRY_RUN" = "no" ) || ( $((n+1)) -ge "$DRY_RUN_MULTIFILE_LIMIT" && "$DRY_RUN" = "yes" ) ]]; then
-	    if [ $n -gt 0 ];then 
-		printVerbose "No next file, this is probably normal, we have all of them."
+        downloadWithWget "$url" "$dir" "${fileName}"
+	singlefileretval=$?
+        if [[ ( $singlefileretval -ne 0 && "$DRY_RUN" = "no" ) || ( $((n+1)) -ge "$DRY_RUN_MULTIFILE_LIMIT" && "$DRY_RUN" = "yes" ) ]]; then
+	    if [ $n -gt 2 ];then 
+		printMessage "No next file, this is typically normal, it means we have all of them."
 		multifileretval=0
+	    elif [ $singlefileretval -ne 2 ];then
+		printError "Error downloading or searching for the next file"
+		multifileretval=3
 	    else
 		printError "No next file but we had one file only. It is suspicious."
 		multifileretval=2
