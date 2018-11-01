@@ -1,0 +1,14 @@
+Changelog for WhoisXML API
+
+CSV importing scripts and schema
+
+-0.0.2: 2018-01-10:
+	o initial release on GitHub
+
+-0.0.3: 2018-11-01:
+	o a critical bug fixed: the script now handles both
+	  UNIX-style (LF) ad Windows-style (CRLF) terminated
+	  input csv files.
+	o changelog added
+	o unnecessary files removed
+	

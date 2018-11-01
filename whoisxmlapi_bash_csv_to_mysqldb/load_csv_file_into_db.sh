@@ -10,7 +10,7 @@
 #
 LANG=C
 LC_ALL=C
-VERSION="0.0.2"
+VERSION="0.0.3"
 VERBOSE="no"
 DEBUG="no"
 MYNAME=$(basename $0)
@@ -251,8 +251,16 @@ else
     printVerbose "Not loading schema, $table exists."
 fi
 
+#Determining the line terminator of the csv file
+line_terminator="\\n"
+if file ${CSV_FILE} | grep -q CRLF ; then
+    line_terminator="\\r\\n"
+    printVerbose "Windows-style CRLF terminated input file detected."
+else
+    printVerbose "UNIX-style LF terminated input file detected."
+fi
+
 fields=$(head -n 1 ${CSV_FILE}|sed 's/"//g')
 
 mysql $(eval echo "$MYSQL_ARGUMENTS") ${MYSQL_DATABASE} ${VERBOSEARG} -e "load data local infile \"${CSV_FILE}\" IGNORE into table $table
-	fields terminated by ',' enclosed by '\"' LINES TERMINATED BY '\n' IGNORE 1 LINES
-	(${fields})"
+	fields terminated by ',' enclosed by '\"' LINES TERMINATED BY '${line_terminator}' IGNORE 1 LINES (${fields})"
