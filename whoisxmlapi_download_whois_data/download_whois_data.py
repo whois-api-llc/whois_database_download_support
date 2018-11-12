@@ -19,7 +19,7 @@ import whois_utils.whois_user_interaction as whois_user_interaction
 from whois_utils.whois_user_interaction import *
 
 # GlobalSettings
-VERSION = "0.1.5"
+VERSION = "0.1.6"
 MYNAME = sys.argv[0].replace('./', '')
 MYDIR = os.path.abspath(os.path.dirname(__file__))
 FEEDCONFIGDIR = MYDIR
@@ -152,6 +152,7 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
         the_feed.set_maxtries(args['maxtries'])
         the_feed.set_feed_type(FEEDCONFIGDIR, args['feed'], dataformat)
         feeds.append(the_feed)
+
     # Set database version for quarterly feeds
     if the_feed.is_quarterly:
         if re.match(r'^v[0-9]+$', str(args['db_version'])) is not None:
@@ -209,10 +210,16 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
     #note: the user may mix tld dependent and independent feeds
     for the_feed in feeds:
         the_feed.open_http_session()
-        the_feed.update_supported_tlds()
         dontneedtlds = dontneedtlds and the_feed.tldindependent
-    available_tlds = [set(the_feed.supported_tlds) for the_feed in feeds]
-    available_tlds = sorted(list(frozenset().union(*available_tlds)))
+    else:
+        available_tlds = []
+    if not dontneedtlds:
+        for the_feed in feeds:
+            if not the_feed.tldindependent:
+                the_feed.update_supported_tlds()
+                available_tlds.append(set(the_feed.supported_tlds))
+        available_tlds = sorted(list(frozenset().union(*available_tlds)))
+
     if args['list_supported_tlds']:
         sys.stderr.write("Available tlds:\n")
         for tld in available_tlds:

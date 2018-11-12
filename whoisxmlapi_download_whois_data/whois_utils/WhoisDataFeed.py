@@ -146,7 +146,14 @@ class WhoisDataFeed:
                 print_error_and_exit('Config error: cannot determine supported url config in feed "%s" , format "%s"\n'
                 % (feed_name, data_format))
                 exit(1)        
-
+        #Determining supported tlds for those archive feeds which have year-named subdirectories
+        try:
+            #by default we assume that there is an url for archive supported tlds
+            self.supported_tlds_url_archive = self.feeds_config.get(feed_name + '__' + data_format, 'supported_tlds_url_archive')
+        except:
+            #If the url for archive supported is not provided, we assume that it is not relevant
+            
+            self.supported_tlds_url_archive = None
         #download_masks_archive: archive feed specific, it is for support of old_data subdirs
         try:
             self.download_masks_archive = self.feeds_config.get(feed_name + '__' + data_format, 'download_masks_archive').split(',')
@@ -171,12 +178,25 @@ class WhoisDataFeed:
             except:
                 #explicit list is given, supported tlds url is none
                 pass
+            #archive supported tlds url if relevant
+            try:
+                self.supported_tlds_url_archive=self.supported_tlds_url_archive.replace('https://direct.bestwhois.org','http://bestwhois.org')
+                self.supported_tlds_url_archive=self.supported_tlds_url_archive.replace('https://direct.domainwhoisdatabase.com','http://www.domainwhoisdatabase.com')
+            except:
+                #has no supported tlds url archive
+                pass
         elif self.authtype == 'ssl':
             self.main_url=self.main_url.replace('http://bestwhois.org','https://direct.bestwhois.org')
             self.main_url=self.main_url.replace('http://www.domainwhoisdatabase.com', 'https://direct.domainwhoisdatabase.com')
             try:
                 self.supported_tlds_url=self.supported_tlds_url.replace('http://bestwhois.org','https://direct.bestwhois.org')
                 self.supported_tlds_url=self.supported_tlds_url.replace('http://www.domainwhoisdatabase.com', 'https://direct.domainwhoisdatabase.com')
+            except:
+                #explicit list is given, supported tlds url is none
+                pass
+            try:
+                self.supported_tlds_url_archive=self.supported_tlds_url_archive.replace('http://bestwhois.org','https://direct.bestwhois.org')
+                self.supported_tlds_url_archive=self.supported_tlds_url_archive.replace('http://www.domainwhoisdatabase.com', 'https://direct.domainwhoisdatabase.com')
             except:
                 #explicit list is given, supported tlds url is none
                 pass
@@ -319,7 +339,10 @@ class WhoisDataFeed:
                 sptldsdate = self.startdate + datetime.timedelta(days=day)
                 datestr = sptldsdate.strftime('_%Y_%m_%d')
                 print_verbose('Getting list of supported tlds on day %d (%s) of %d days.' %(day+1, datestr, ndays))
+                thisdaysyear = sptldsdate.year
                 url = self.supported_tlds_url.replace('$_date', datestr).replace('$year',sptldsdate.strftime('%Y')).replace('$month',sptldsdate.strftime('%m'))
+                if self.supported_tlds_url_archive != None and thisdaysyear != datetime.date.today().year:
+                    url = self.supported_tlds_url_archive.replace('$_date', datestr).replace('$year',sptldsdate.strftime('%Y')).replace('$month',sptldsdate.strftime('%m'))
                 print_debug("TLD url: %s" % url)
                 supptlds_forday = self.get_url_contents(url).strip().split(',')
                 print_debug("Downloaded info: %s" % str(supptlds_forday))

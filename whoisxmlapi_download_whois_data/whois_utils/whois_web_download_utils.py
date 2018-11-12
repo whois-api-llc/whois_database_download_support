@@ -153,7 +153,7 @@ def web_download_file(url, session, output_dir, maxtries, force):
                     print "HTTP %s Unauthorized. Login credentials are wrong." % r.status_code
                     return False
                 elif r.status_code == 404:
-                    print "HTTP %s does not exist. Giving up." % (url_print)
+                    print "HTTP %s does not exist." % (url_print)
                     ntries = maxtries + 1
                     return False
                 else:

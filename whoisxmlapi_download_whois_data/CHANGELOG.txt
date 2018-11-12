@@ -1,0 +1,15 @@
+Changelog for the WhoisXML API
+
+Whois data download utility
+
+download_whois_data.py
+
+2018-11-12:
+----------
+-CHANGELOG.txt introduced
+-Added support for the data feed "gtlds_domain_names_whois_archive"
+-Fixed issues related to mixing tld dependent and independent data
+ formats within the same session
+-Introduced the support for determining list of supported tlds
+ for archive feeds with year-named subdirectories
+-Refined error message for non-existing resources
