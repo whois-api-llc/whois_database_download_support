@@ -2,8 +2,8 @@ README document for
 
 CSV importing scripts and schema
 
-Document version: 1.0
-Dated: 06-07-2017.
+Document version: 1.1
+Dated: 30-11-2018.
 
 Contents:
 ---------
@@ -15,11 +15,31 @@ Contents:
 ----------------
 
 load_csv_file_into_db.sh	     -- loader script in Bash, this is the one documented here
-load_csv_file_into_db_old.sh	     -- legacy version of loader script in Bash, used till July 2017.
-loader_schema_full.sql        	     -- schema file for full csv-s (daily and quarterly feeds)
-loader_schema_regular_daily.sql	     -- schema file for regular csv-s from daily feeds
-loader_schema_regular_quarterly.sql  -- schema file for regular csv-s from quarterly feeds
-loader_schema_simple.sql 	     -- schema file for simple csv-s (quarterly feeds only)
+
+load_csv_file_into_db_old.sh	     -- legacy version of loader script in
+				     	Bash, used till July 2017.
+
+loader_schema_full.sql        	     -- schema file for full csv-s
+				     	(daily and quarterly feeds)
+loader_schema_regular.sql            -- schema file for regular csv-s for both
+				     	quarterly and daily feeds.
+					The fields registrant_rawText,
+					administrativeContact_rawText,
+					billingContact_rawText,
+					technicalContact_rawText,
+					and zoneContact_rawText
+					will remain empty when csv-s
+					from daily feeds are imported.
+
+loader_schema_regular_daily_only.sql -- schema file for regular csv-s
+				        for data from daily feeds only.
+					Does not contain the
+					raw text fields
+					which are only present
+					in quarterly data.
+
+loader_schema_simple.sql 	     -- schema file for simple csv-s
+				     	(quarterly feeds only)
 README				     -- this file
 
 2. Script specification

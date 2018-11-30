@@ -1,9 +1,9 @@
 create table whois_record_flat_simple (
 `whois_record_flat_id` bigint(20) NOT NULL AUTO_INCREMENT,
 `domainName` varchar(256),
-`registrarName` longtext,
+`registrarName` varchar(512),
 `contactEmail` varchar(256),
-`whoisServer` longtext,
+`whoisServer` varchar(512),
 `nameServers` varchar(256),
 `createdDate` varchar(256),
 `updatedDate` varchar(256),
