@@ -4,6 +4,11 @@ Whois data download utility
 
 download_whois_data.py
 
+2018-11-27
+----------
+-Added support for the feed whois_record_delta_domain_names_change_archive
+-Fixed a bug of not reporting unavailable files for whole directory downloads
+
 2018-11-12:
 ----------
 -CHANGELOG.txt introduced

@@ -444,7 +444,9 @@ class WhoisDataFeed:
                             if downloadfiles != []:
                                 for downloadfile in downloadfiles:
                                     download_urls.append(downloadurl_base + downloadfile)
-                                    
+                            else:
+                                print_verbose("No files in %s, this can be normal." % (downloadurl_base))
+                                self.failed.append(downloadurl_base)
                     #We do the main job here: downloading
                         for downloadurl in download_urls:
                             success = whois_web_download_utils.web_download_and_check_file(downloadurl, md5url, self.session, thistargetdir, self.maxtries)

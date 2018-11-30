@@ -190,6 +190,8 @@ def webdir_ls(url, session):
     An empty list is returned if something goes wrong.
     """
     rawdirlist = session.get(url, stream=True, timeout=30)
+    print_debug("Getting url: %s" % (url))
+    print_debug("Result:" + str(rawdirlist))
     if rawdirlist.status_code == 200:
         Index_Parser.reset_filelist()
         Index_Parser.feed(rawdirlist.text)
