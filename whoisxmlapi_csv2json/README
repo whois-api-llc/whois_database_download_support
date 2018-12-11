@@ -1,0 +1,10 @@
+transform_json.py - a Python 3 script to convert csv files
+		    downloaded from WhoisXML API data feeds
+		    to json format.
+
+
+Detailed documentation will be available soon.
+For the time being, please refer to
+
+transform_json.py --help
+

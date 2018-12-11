@@ -19,6 +19,9 @@ whoisxmlapi_whoisdownload_bash:  a bash script for downloading bulk
 				 data from daily and quarterly WHOIS
 				 data feeds.
 
+whoisxmlapi_bash_csv_to_mysqldb  a python script which converts WhoisXML API
+				 csv files to json files.
+
 whoisxmlapi_bash_csv_to_mysqldb: bash scripts to create and maintain
 				 WHOIS databases in MySQL
 				 based on csv files downloaded from
