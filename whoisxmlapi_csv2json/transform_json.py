@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-from sys import maxsize as csv_maxsize
 from argparse import ArgumentParser
 import csv
 import multiprocessing
 import json
 import os
+from platform import system
 
 
 # Preparing arguments
@@ -25,23 +25,16 @@ argparser.add_argument('--human-readable',
 args = argparser.parse_args()
 
 # increase max size of the field
-csv.field_size_limit(csv_maxsize)
-
-# populating queue
-csvQueue = multiprocessing.Queue()
-if os.path.isdir(args.path):
-    for csv_f in os.listdir(args.path):
-        if csv_f.endswith('.csv'):
-            csvQueue.put(os.path.join(args.path, csv_f))
-elif os.path.isfile(args.path) and os.path.endswith('.csv'):
-    csvQueue.put(args.path)
+if system() == 'Windows':
+    csv.field_size_limit(2147483647)
 else:
-    exit(1)
+    from sys import maxsize as csv_maxsize
+    csv.field_size_limit(csv_maxsize)
 
 
-def convert_json():
-    while not csvQueue.empty():
-        csv_file = csvQueue.get()
+def convert_json(csv_queue):
+    while not csv_queue.empty():
+        csv_file = csv_queue.get()
         json_file = os.path.join(
             os.path.dirname(csv_file),
             os.path.basename(csv_file).replace('.csv', '.json'))
@@ -52,7 +45,7 @@ def convert_json():
                 for in_row in infile_csv:
                     out_data.update({in_row[args.key]: {}})
                     for field in infile_csv.fieldnames:
-                        if field != args.key:
+                        if field != args.key and in_row[field] != '':
                             out_data[in_row[args.key]].update({field: in_row[field]})
             with open(json_file, 'wt') as json_file_obj:
                 if args.human_readable:
@@ -62,10 +55,23 @@ def convert_json():
             del out_data
 
 
-threads = []
-for t in range(0, args.threads):
-    convert_thread = multiprocessing.Process(target=convert_json)
-    convert_thread.start()
-    threads.append(convert_thread)
-for convert_thread in threads:
-    convert_thread.join()
+if __name__ == '__main__':
+    # populating queue
+    csvQueue = multiprocessing.Queue()
+
+    if os.path.isdir(args.path):
+        for csv_f in os.listdir(args.path):
+            if csv_f.endswith('.csv'):
+                csvQueue.put(os.path.join(args.path, csv_f))
+    elif os.path.isfile(args.path) and args.path.endswith('.csv'):
+        csvQueue.put(args.path)
+    else:
+        exit(1)
+
+    threads = []
+    for t in range(0, args.threads):
+        convert_thread = multiprocessing.Process(target=convert_json, args=(csvQueue, ))
+        convert_thread.start()
+        threads.append(convert_thread)
+    for convert_thread in threads:
+        convert_thread.join()
