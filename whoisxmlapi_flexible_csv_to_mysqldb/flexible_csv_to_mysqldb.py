@@ -15,7 +15,7 @@ import copy
 import mysql.connector
 
 # GlobalSettings
-VERSION = "0.0.1"
+VERSION = "0.0.2"
 MYNAME = sys.argv[0].replace('./', '')
 
 
@@ -80,6 +80,9 @@ def parse_arguments():
                         REQUIRED if the table does not yet exist.''')
     parser.add_argument('--mysql-errors', action='store_true', help='Print wrong SQL inserts.')
 
+    parser.add_argument('--all-fields-as-text', action='store_true',
+                        help='If this option is specified, all the fields except id and domainName will be imported as type "text"')
+    
     parser.add_argument('FILE', nargs='+',
                         help='''The CSV files to operate on. Also it can be path. 
                                 All files have to be CSVs or archives with CSVs.''')
@@ -160,8 +163,7 @@ def drop_table(table, mysql_errors, **kwargs):
         if mysql_errors:
             print(query)
         sys.exit('Unable to drop table.')
-
-
+        
 @mysql_query
 def create_table(headers, table, mysql_errors, **kwargs):
     fields = []
@@ -170,8 +172,13 @@ def create_table(headers, table, mysql_errors, **kwargs):
         if 'domainName' == field:
             fields.append('`%s` varchar(256) DEFAULT NULL' % field)
         else:
-            fields.append('`%s` TEXT DEFAULT NULL' % field)
-
+            if args.all_fields_as_text:
+                fields.append('`%s` TEXT DEFAULT NULL' % field)
+            else:
+                try:
+                    fields.append('`%s` %s DEFAULT NULL' % (field, field_types[field]))
+                except KeyError:
+                    fields.append('`%s` TEXT DEFAULT NULL' % field)
     fields.append('PRIMARY KEY (`id`)')
     fields.append('KEY `domainName` (`domainName`)')
 
@@ -213,7 +220,7 @@ def loadcsv(csvfile, table, mysql_errors, **kwargs):
     cursor = kwargs['cursor']
     db_settings = kwargs['db_settings']
 
-    with open(csvfile) as f:
+    with open(csvfile, encoding="utf8") as f:
         reader = csv.DictReader(f)
         headers = reader.fieldnames
 
@@ -243,7 +250,7 @@ def loadcsv(csvfile, table, mysql_errors, **kwargs):
 
 
 def check_and_create_table(csvfile, table, mysql_errors, **kwargs):
-    with open(csvfile) as f:
+    with open(csvfile, encoding="utf8") as f:
         reader = csv.DictReader(f)
         headers = reader.fieldnames
 
@@ -262,7 +269,7 @@ def get_table_fields(table, mysql_errors, **kwargs):
 
 
 def is_table_have_same_set_of_headers(csvfile, table, mysql_errors, **kwargs):
-    with open(csvfile) as f:
+    with open(csvfile, encoding="utf8") as f:
         reader = csv.DictReader(f)
         headers = reader.fieldnames
 
@@ -315,7 +322,7 @@ def check_and_return_files(files):
 
 
 def get_csv_headers(csvfile):
-    with open(csvfile) as f:
+    with open(csvfile, encoding="utf8") as f:
         reader = csv.DictReader(f)
         try:
             headers = reader.fieldnames
@@ -338,6 +345,18 @@ def find_incorrect_csvs(csvfs, headers_of_first_csv):
 if __name__ == "__main__":
     args = parse_arguments()
 
+    #Set up the dictionary of fields if necessary
+    if not args.all_fields_as_text:
+        try:
+            field_types_file = open(sys.path[0] + '/' + 'field_types.csv', 'r')
+        except FileNotFoundError:
+            sys.stderr.write("\nThe file 'field_types.csv' was not found next to the script.\n")
+            sys.stderr.write("Put the file there or use the --all-fields-as-text option.\n\n")
+        field_types = {}
+        for field_record in field_types_file:
+            field_record_split = field_record.split(',')
+            field_types[field_record_split[0]]=field_record_split[1]
+            
     file_set = check_and_return_files(args.FILE)
 
     # Removing temp dir if it exists.

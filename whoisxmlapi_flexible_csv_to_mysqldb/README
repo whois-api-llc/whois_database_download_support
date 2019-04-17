@@ -2,8 +2,18 @@ flexible_csv_to_mysqldb.py -- a Python3 scripts to create and maintain a
 		      	 WHOIS database in MySQL, using csv files
 			 obtained from WhoisXML API.
 
-ver. 0.0.1, dated 2018.01.09.
+ver. 0.0.2
 
+Changelog:
+
+ver. 0.0.1, dated 2018.01.09.
+ - initial release
+ 
+ver. 0.0.2, dated 2019.04.17.
+ - introduced field_types.csv, fixed field types
+ - added the --all-fields-as-text option
+ - fixed file read with utf8 encoding on Windows platforms
+ 
 Contents:
 
 1. INSTALLATION
@@ -95,6 +105,15 @@ In all  examples we use Linux/UNIX  style subdirectory specifications,
 that is, the path elements are  separated with "/". On Windows systems
 in DOS  command-line or Powershell,  you should use  backslashes ("\")
 instead.
+
+Note:  the script  normally reads  the data  types of  the fields  for
+creating  tables from  the  file "field_types.csv"  supplied with  the
+script.  It  should  be in  next  to  the  script,  i.e. in  the  same
+directory. When  using the --all-fields-as-text option,  all the field
+apart from the record id "id" and the "domainName" will be of SQL type
+"text". The  "field_types.csv" is ignored  in this case.  This option,
+however, leads  to less  efficient data  storage and  limited indexing
+opportunities.
 
 Example 1.
 ----------
