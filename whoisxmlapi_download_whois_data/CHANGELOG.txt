@@ -4,6 +4,13 @@ Whois data download utility
 
 download_whois_data.py
 
+2019-06-20
+----------
+- The option --list-feeds shows brief feed descriptions.
+- The --describe-feed option has been introduced.
+- A bug has been fixed which affected tld-independent feeds.
+- An error message is generated if feeds.ini cannot be read.
+
 2018-11-27
 ----------
 -Added support for the feed whois_record_delta_domain_names_change_archive

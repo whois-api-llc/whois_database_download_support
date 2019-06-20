@@ -19,7 +19,7 @@ import whois_utils.whois_user_interaction as whois_user_interaction
 from whois_utils.whois_user_interaction import *
 
 # GlobalSettings
-VERSION = "0.1.7"
+VERSION = "0.1.8"
 MYNAME = sys.argv[0].replace('./', '')
 MYDIR = os.path.abspath(os.path.dirname(__file__))
 FEEDCONFIGDIR = MYDIR
@@ -31,7 +31,6 @@ feed_descriptions = wdf.feed_descriptions(FEEDCONFIGDIR)
 
 if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
     DIALOG_COMMUNICATION = False
-
     # command-line version, load_mysql_data.pyw has been started
     # Here we parse the command-line and get the values of the arguments
     parser = ArgumentParser(
@@ -79,6 +78,9 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
                         help='List supported feeds. Other arguments are ignored',
                         action='store_true')
     parser.add_argument('--feed', help='Use this feed')
+    parser.add_argument('--describe-feed',
+                        action='store_true',
+                        help='Print the description and data formats of the feed and exit.')
     parser.add_argument('--list-dataformats',
                         help='List the data formats supported by the feed',
                         action='store_true')
@@ -110,12 +112,18 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
     whois_user_interaction.DEBUG = args['debug']
     whois_user_interaction.DIALOG_COMMUNICATION = False
     wdf.set_verbosity(args['debug'], args['verbose'], False)
+    #Checking if we have feeds from the ini
+    if formatmatrix == {}:
+        print_error_and_exit(
+            "Feed configuration invalid, probably missing feeds.ini file.\nPlease place the feeds.ini file supplied with the program next to the program.")
     # The user wants to list feeds
     if args['list_feeds']:
         sys.stderr.write("\nSupported feeds and data formats: ")
         sys.stderr.write("\n")
         for feed in formatmatrix.keys():
-            sys.stderr.write("Feed: %.60s \n      formats: " % feed)
+            sys.stderr.write("- Feed: %.60s \n" % feed)
+            sys.stderr.write("  Description: %s \n"% feed_descriptions[feed])
+            sys.stderr.write("  Formats: ")
             for f in formatmatrix[feed]:
                 sys.stderr.write("%s " % f)
             sys.stderr.write("\n")
@@ -133,6 +141,14 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
     # The user wants data formats for this feed
     if args['list_dataformats']:
         sys.stderr.write("Data formats for feed %s: " % args['feed'])
+        for f in formatmatrix[args['feed']]:
+            sys.stderr.write("%s " % f)
+        sys.stderr.write("\n")
+        exit(6)
+    if args['describe_feed']:
+        sys.stderr.write("- Feed: %.60s \n" % args['feed'])
+        sys.stderr.write("  Description: %s \n"% feed_descriptions[args['feed']])
+        sys.stderr.write("  Formats: ")
         for f in formatmatrix[args['feed']]:
             sys.stderr.write("%s " % f)
         sys.stderr.write("\n")
@@ -260,6 +276,9 @@ else:
     whois_user_interaction.DEBUG = False
     whois_user_interaction.DIALOG_COMMUNICATION = True
     wdf.set_verbosity(False, True, True)
+    if formatmatrix == {}:
+        print_error_and_exit(
+            "Feed configuration data not found, probably missing feeds.ini file.\nPlease place the feeds.ini file supplied with the program next to the program.")
     # Things you cannot do when interactive
     # Note: set the next two to True for console debug
     args['cacertfile'] = MYDIR + '/whoisxmlapi.ca'

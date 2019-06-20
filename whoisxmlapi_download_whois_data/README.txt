@@ -4,7 +4,7 @@ Whois data download utility
 
 download_whois_data.py
 
-Release version 0.1.6 dated 2018-11-12.
+Release version 0.1.8 dated 2019-06-20.
 
 Copyright (c) 2010-2017 Whois API LLC,  http://www.whoisxmlapi.com
 -------------------------------------------------------------------
@@ -164,12 +164,17 @@ List the supported feeds and data formats:
 
 ./download_whois_data.py --list-feeds
 
-List the data formats available for the feed "whois_database"
+List the data formats available for the feed "whois_database":
 
 ./download_whois_data.py --feed whois_database --list-dataformats
 
+Display the brief description and the list of the data formats
+available for the feed "whois_database":
+
+./download_whois_data.py --feed whois_database --describe-feed
+
 List tlds  supported by the  feed "domain_names_whois". The  result is
-the set of all tlds supported on any of the days. 
+the set of all tlds supported on any of the days:
 
 ./download_whois_data.py --feed domain_names_whois --startdate 20170810 --enddate 20170812 --dataformats full_csv --list-supported-tlds --username JohnDoe --password MyPassword42
 
@@ -189,13 +194,12 @@ into the directory /tmp (should exist already):
 ./download_whois_data.py --verbose --feed whois_database --db-version v20 --dataformat simple_csv --all-tlds --output-dir /tmp
 
 Download full  csv files for  the tld aero from 20170810  to 20170812
-into "download_testdir". Use ssl authentication.
+into "download_testdir". Use ssl authentication:
 
 ./download_whois_data.py --feed domain_names_whois --startdate 20170810 --enddate 20170812 --dataformats full_csv --tlds aero --sslauth --verbose --output-dir download_testdir
 
 Download  full csv  data for  all tlds  for 2017-08-11  into "download
-testdir" 
-choose any other existing tld)
+testdir":
 
 ./download_whois_data.py --feed domain_names_whois --startdate 20170811 --dataformats full_csv_all_tlds  --verbose --output-dir download_testdir
 

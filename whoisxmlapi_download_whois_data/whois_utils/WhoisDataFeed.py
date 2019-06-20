@@ -132,28 +132,31 @@ class WhoisDataFeed:
             sys.stderr.write('Config error: a feed should be either daily or quarterly, problem with feed "%s" , format "%s"\n'
                              % (feed_name, data_format))
             exit(1)
-        #How to determine supported tlds
-        try:
-            #by default we assume that there is an url for supported tlds
-            self.supported_tlds_url = self.feeds_config.get(feed_name + '__' + data_format, 'supported_tlds_url')
-        except:
-            #If the url was not specified, supported tlds should be listed in the config
+        if self.tldindependent:
             self.supported_tlds_url = None
+        else:
+        #How to determine supported tlds
             try:
-                tlds = self.feeds_config.get(feed_name + '__' + data_format, 'supported_tlds_list')
-                self.supported_tlds = [tld.strip() for tld in tlds.split(' ')]
+                #by default we assume that there is an url for supported tlds
+                self.supported_tlds_url = self.feeds_config.get(feed_name + '__' + data_format, 'supported_tlds_url')
             except:
-                print_error_and_exit('Config error: cannot determine supported url config in feed "%s" , format "%s"\n'
-                % (feed_name, data_format))
-                exit(1)        
-        #Determining supported tlds for those archive feeds which have year-named subdirectories
-        try:
-            #by default we assume that there is an url for archive supported tlds
-            self.supported_tlds_url_archive = self.feeds_config.get(feed_name + '__' + data_format, 'supported_tlds_url_archive')
-        except:
-            #If the url for archive supported is not provided, we assume that it is not relevant
-            
-            self.supported_tlds_url_archive = None
+                #If the url was not specified, supported tlds should be listed in the config
+                self.supported_tlds_url = None
+                try:
+                    tlds = self.feeds_config.get(feed_name + '__' + data_format, 'supported_tlds_list')
+                    self.supported_tlds = [tld.strip() for tld in tlds.split(' ')]
+                except:
+                    print_error_and_exit('Config error: cannot determine supported TLDS url config in feed "%s" , format "%s"\n'
+                    % (feed_name, data_format))
+                    exit(1)        
+            #Determining supported tlds for those archive feeds which have year-named subdirectories
+            try:
+                #by default we assume that there is an url for archive supported tlds
+                self.supported_tlds_url_archive = self.feeds_config.get(feed_name + '__' + data_format, 'supported_tlds_url_archive')
+            except:
+                #If the url for archive supported is not provided, we assume that it is not relevant
+
+                self.supported_tlds_url_archive = None
         #download_masks_archive: archive feed specific, it is for support of old_data subdirs
         try:
             self.download_masks_archive = self.feeds_config.get(feed_name + '__' + data_format, 'download_masks_archive').split(',')
