@@ -43,3 +43,67 @@ store empty files, so these files will be reported as unavailable, but
 this is normal.
 
 --------------------------------------------------------------------
+
+Q4:  So far  I have  been using  "download_whois_info.py" which  I had
+downloaded for a  release a few years ago. I've  just realized that it
+is   not   supported   anymore   and   it   has   been   replaced   by
+"download_whois_data". I  decided to  switch the  new script,  but the
+options of the  script are different and not compatible.  Why? Can you
+make it compatible?
+
+A4:  We decided  to redesign  the  python downloader  in 2017  because
+"download_whois_info.py" was  not scalable; initially it  was intended
+as a  small example script  but the requirements against  a downloader
+script  went  far  beyond  the   original  idea,  so  a  redesign  was
+unavoidable.   The  current script  has  many  options and  much  more
+capabilities than the  legacy one. So supporting the  legacy and rather
+illogical  options  would  lead  tho  an  extremely  large  number  of
+options. In addition the operation logic behind the new script is also
+different, it is not always possible to map the new options to the old
+ones. So it  will not be made compatible, but  the command-line can be
+easily rewritten along the following lines:
+
+- old script option: -c
+  use --feed instead
+
+- old script option: -l or --login:
+  use --username instead
+
+- old script option: -p or --password:
+  use --password
+
+- old script option: -d or --date, with YYYY-MM-DD:
+  use --startdate with YYYYMMDD
+
+- old script option: --end-date, with YYYY-MM-DD:
+  use --enddate with YYYYMMDD
+
+- old script option: -v or --version:
+  use --dbversion instead
+
+- old script option: -t, --tld, possibly with a space-separated list
+  use --tlds, for more tlds, use a comma-separated list.
+  It has no default value. For all tlds, use the --all-tlds options
+
+- old script option: -f
+  Use --dataformats instead, a comma-separated list for all formats.
+  There is no "all" possibility. Use the --list-dataformats to list
+  the available formats for each feed.
+
+- old script option: -odir or --output-dir
+  Use --output-dir. It has no default value, hence, it is a mandatory
+  argument now.
+
+- old script option: --interactive
+  Now it invokes the GUI mode of the script.
+  The old function of --interactive is not supported.
+  Consult the documentation on how to influence
+  redownloading behavior, especially the --maxtries option
+
+- old script option: --no-override
+  No such option. Currently if a file is there,
+  it will not be downloaded again unless its md5sum
+  does not match the file. To redownload,
+  delete the respective file.
+  
+  
