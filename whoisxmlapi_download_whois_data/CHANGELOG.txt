@@ -4,6 +4,11 @@ Whois data download utility
 
 download_whois_data.py
 
+2019-12-10
+
+- The script is made Python 3 compatible, the documentation has been
+  amended accordingly.
+
 2019-06-20
 ----------
 - The option --list-feeds shows brief feed descriptions.
