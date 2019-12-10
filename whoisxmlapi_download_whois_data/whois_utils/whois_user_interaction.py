@@ -27,12 +27,12 @@ def print_verbose(message):
     global VERBOSE
     global DEBUG
     if VERBOSE or DEBUG:
-        print >> sys.stderr, message
+        sys.stderr.write(message + '\n')
         sys.stderr.flush()
 def print_debug(message):
     global DEBUG
     if DEBUG:
-        print >> sys.stderr, message
+        sys.stderr.write(message + '\n')
         sys.stderr.flush()
 #File and directory utilites
 def get_file(path, message):

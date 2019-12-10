@@ -1,9 +1,9 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 #
 # Script to download data from WhoisXML API subscriptions
 # Provided for subscribers of quarterly whois data feeds
 #
-# Copyright (c) 2010-2017 Whois API LLC,  http://www.whoisxmlapi.com
+# Copyright (c) 2010-2019 Whois API, Inc,  http://www.whoisxmlapi.com
 #
 
 import sys
@@ -19,7 +19,7 @@ import whois_utils.whois_user_interaction as whois_user_interaction
 from whois_utils.whois_user_interaction import *
 
 # GlobalSettings
-VERSION = "0.1.8"
+VERSION = "1.0.0"
 MYNAME = sys.argv[0].replace('./', '')
 MYDIR = os.path.abspath(os.path.dirname(__file__))
 FEEDCONFIGDIR = MYDIR
@@ -43,7 +43,7 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
     parser.add_argument('--version',
                         help='Print version information and exit.',
                         action='version',
-                        version=MYNAME + ' ver. ' + VERSION + '\n(c) WhoisXML API LLC.')
+                        version=MYNAME + ' ver. ' + VERSION + '\n(c) WhoisXML API, Inc.')
     parser.add_argument('-v', '--verbose',
                         help='\n'.join(['Print messages. Recommended.',
                                         'If not specifies, the script runs quietly,',

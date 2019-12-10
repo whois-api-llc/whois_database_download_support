@@ -6,8 +6,12 @@
 import sys
 import os
 import tempfile
-import ConfigParser
 import re
+
+try:
+    import ConfigParser
+except ModuleNotFoundError:
+    import configparser as ConfigParser
 
 import datetime
 
@@ -20,6 +24,12 @@ import whois_utils.whois_web_download_utils as whois_web_download_utils
 
 import whois_utils.whois_user_interaction as whois_user_interaction
 from whois_utils.whois_user_interaction import *
+
+#Python3 compatibility hack
+try:
+    unicode('')
+except NameError:
+    unicode = str
 
 def set_verbosity(debug, verbose, dialog_communication):
     whois_user_interaction.DIALOG_COMMUNICATION = dialog_communication

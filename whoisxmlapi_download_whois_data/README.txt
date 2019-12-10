@@ -4,9 +4,9 @@ Whois data download utility
 
 download_whois_data.py
 
-Release version 0.1.8 dated 2019-06-20.
+Release version 1.0.0 dated 2019-12-10.
 
-Copyright (c) 2010-2017 Whois API LLC,  http://www.whoisxmlapi.com
+Copyright (c) 2010-2017 Whois API, Inc.  http://www.whoisxmlapi.com
 -------------------------------------------------------------------
 
 The script is provided for our subscribers to download data from their
@@ -46,6 +46,7 @@ Contents
 ----------------
 
 README.txt		: this file
+README_python2.txt	: installation instructions for series 2 Python
 README.SSL.txt		: documentation on how to set up ssl key-based authentication
 SPECIFICATIONS.txt      : specifications of the scripts. For developers and advanced users.
 FAQ.txt			: frequently asked questions
@@ -53,6 +54,9 @@ download_whois_data.py  : the script to run
 install_p12.py		: ssl key and cert installer script, see README.SSL.txt
 feeds.ini		: the configuration file describing the feeds supported by the script.
 			  Not intended to be edited by end-users.
+requirements.txt	: description of package requirements that can be used with pip3 in a
+			  Python virtual environment (Linux, Mac OS X)
+requirements_windows.txt: description of package requirements which can be used with pip on Windows
 whois_utils		: a directory with the modules used by the script.
 			  It contains the following files:
 			   __init__.py
@@ -75,53 +79,70 @@ installation, just start the scripts.  You may just try starting it by
 double  clicking (Windows)  or running  it from  command-line (do  not
 forget to ensure execution permissions, aka. download_whois_data.py.
 
+As  of version  1.*,  the script  can  be run  with  both Python3  and
+Python2. It has  been tested with Python 3.6.9 and  2.7.15, and should
+work with newer versions, too. The following description addresses the
+installation  with  Python3, as  Python2  retires  on 2020.01.01.  If,
+however, you want to use the program with Python2 for some reason, the
+script supports this, please  read "README_python2.txt" instead of the
+following installation steps, which apply for series 3 Python.
+
+NOTE: To  maintain compatibility with  the previous versions,  it does
+not specifically  require series 3  Python, it will start  the default
+Python interpreter.  To make sure that  it runs with Python 3, replace
+the first line of the file "download_whois_data.py", which reads
+
+/usr/bin/env python
+
+with
+
+/usr/bin/env python3
+
+using a programmer's text editor. 
+
+
 Step 1: Install Python
 
-The  script has  been developed  with Python  2.7.12 and  it has  been
-tested with versions from 2.7.10 to  2.7.13. It should work with newer
-versions  of series  2 Python.
+Python is easy to install on most platforms:
 
-If for some  reason you have an  earlier version of Python  2, such as
-Python 2.6,  you shall  have compatibility issues.  (This is  the case
-when you use the default Python  on certain releases of CentOS or RHEL
-ver. 6.) It is always possible on those systems to set up Python 2.7.x
-in parallel, consult the documentation of your system.
+- On Linux systems, use your package manager, e.g. "apt-get install
+  python3".
 
--On Linux systems, use your package manager, e.g. "apt-get install python".
--On Windows systems, download the installer from
-    www.python.org, series 2 (2.7.x) for your platform, then start and
-    go through the installation procedure. Be careful to install with
-    the following options enabled:
-          -"Install pip" (this is the default)
-	  -"Add Python to path"
+-On Windows, download the installer  from www.python.org, the series 3
+    for  your platform,  then start  and go  through the  installation
+    procedure.  Be  careful  to  install  with  the  following  option
+    enabled: -"Add Python to path"
+
+- On  Mac  OS  X  you  also   need  to  download  the  installer  from
+  www.python.org, and follow the instructions.  Or you may opt for the
+  Homebrew approach, see e.g. https://docs.brew.sh/Homebrew-and-Python
 
 Step 2: Install Dependencies
 
-     Additional required python packages are:
+Additional required python packages are:
 
-     argparse
-     easygui
-     requests
+requests
+easygui
+argparse
 
-     On both Windows and Linux you can install them by the
-     (root/administrator) command-line:
+On   both  Windows   and   Linux   you  can   install   them  by   the
+(root/administrator) command-line:
 
-     pip install <dependency>
+     pip3 install <dependency>
 
-     where <dependency> is one of the above three
-     packages. Alternatively, you may find these as software packages
-     for your system (aka "apt-get install python-easygui")
+where <dependency> is one of  the above three packages. Alternatively,
+you may find these as software  packages for your system (e.g. "apt-get
+install python3-easygui" on Debian-flavor systems).
 
-If these  steps were made,  the script's  dependencies are met,  it is
-ready for use.
+For advanced Python users:
 
-The script  supports the  access of the  data via  ssl-encrypted pages
-using ssl key-based authentication. Those clients who want to use this
-possibility should read the file
+It is  of course a good  practice to use a  Python virtual environment
+for installing the  required packages. If you familiar  with this, you
+may use  the supplied  requirements.txt (or  requirments_windows.txt on
+Windows)  for installing  the  required packages.  You  may use  these
+latter  also without  a  virtual environment,  but it  is  not a  good
+practice.
 
-README.SSL.txt
-
-to do the necessary steps for configuring this kind of access.
 
 3. Basic use: GUI operation
 ----------------------------

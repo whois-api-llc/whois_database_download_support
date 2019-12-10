@@ -4,7 +4,7 @@ Setting up ssl authentication to use with download_whois_data.py
 
 Provided by WhoisXML API, Inc.
 
-dated: 2018-02-06
+dated: 2018-12-10
 
 
 Contents:
@@ -47,7 +47,7 @@ done  so, you  do not  need  to reed  further,  you can  use SSL  auth
 readily.
 
 So let us  assume that given your  p12 pack and password,  you want to
-generate the three required files with the Python 2 script
+generate the three required files with the Python script
 
 install_p12.py.
 
@@ -56,23 +56,20 @@ in the main README of the project, you will need two additional Python
 packages.  So as  a root,  or  in an  administrator command-prompt  on
 native Windows systems (prepared to run download_whois_data.py), do
 
-pip2 install pycrypto pyopenssl
+   pip3 install pyOpenSSL pycrypto
 
-On Windows during this procedure you may encounter the following errors:
+if you are using series 3 Python, and 
 
-"Microsoft Visual C++ 9.0 is required. Get it from http://aka.ms/vcpython27"
+   pip2 install pycrypto pyopenssl
 
-and
+if you are using the legacy series 2 Python.
 
-"Microsoft Visual C++ 14.0 is required. Get it with "Microsoft Visual C++ Build Tools": http://landinghub.visualstudio.com/visual-cpp-build-tools"
+On Windows, instead of "pycrypto" we recommend to use "pycryptodome":
 
-To overcome these issues just visit  the web pages in the messages and
-install  the pieces  of software  which are  available from  there for
-free. The  second one will  require you  to restart your  computer. We
-admit that this is a rather complicated  matter, but you need to do it
-just once.  (Alternatively,  you may do the conversion on  a Linux box
-where it is  simpler, and copy your  files, whoisxmlapi.ca, client.crt
-and client.key to your Windows box from there.)
+   pip3 install pyOpenSSL pycryptodome
+
+as it is does not need any Visual C++ packages to be installed.
+
 
 2. Installing the auth credentials
 ----------------------------------

@@ -3,14 +3,24 @@
 # Copyright (c) 2010-2017 Whois API LLC,  http://www.whoisxmlapi.com
 #
 
-from urlparse import urlparse
-from HTMLParser import HTMLParser
+from __future__ import print_function
+
+try:
+    from urllib.parse import urlparse
+except ImportError:
+     from urlparse import urlparse
+try:
+    from HTMLParser import HTMLParser
+except ImportError:
+     from html.parser import HTMLParser
+    
 import requests
 import os, hashlib, re
 import datetime
 import time
-import whois_user_interaction
-from whois_user_interaction import *
+
+import whois_utils.whois_user_interaction as whois_user_interaction
+from whois_utils.whois_user_interaction import *
 whois_user_interaction.VERBOSE = True
 whois_user_interaction.DEBUG = True
 
@@ -150,10 +160,10 @@ def web_download_file(url, session, output_dir, maxtries, force):
                     sys.stdout.flush()
                                     # print "File has been downloaded successfully."
                 elif r.status_code == 401:
-                    print "HTTP %s Unauthorized. Login credentials are wrong." % r.status_code
+                    print("HTTP %s Unauthorized. Login credentials are wrong." % r.status_code)
                     return False
                 elif r.status_code == 404:
-                    print "HTTP %s does not exist." % (url_print)
+                    print("HTTP %s does not exist." % (url_print))
                     ntries = maxtries + 1
                     return False
                 else:

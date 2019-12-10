@@ -32,8 +32,8 @@ downloading of  data from the  feeds provided by WhoisXML API, Inc.
 It is designed to meet the following requirements:
 
 -The script is  cross-platform. It is supposed to run  on any platform
- on  which Python  >=2.7.x  and  the dependencies  of  the script  are
- available.
+ on  which Python  >= 3.6.x  (or the  legacy Python  >=2.7.x) and  the
+ dependencies of the script are available.
 
 -All its functions are  available from command-line using command-line
  arguments.

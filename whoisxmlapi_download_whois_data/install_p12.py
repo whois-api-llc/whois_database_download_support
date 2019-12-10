@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 #This utility extracts a p12 pack obtained from WhoisXML API Inc.
 #Into files that can be used with downloader scripts.
 
@@ -15,26 +15,26 @@ password=g.passwordbox('Enter the password supplied with your pack',
                        windowtitle)
 
 try:
-    p12 = c.load_pkcs12(open("matyas-pack.p12", 'rb').read(), password) 
+    p12 = c.load_pkcs12(open(infile, 'rb').read(), password) 
 except:
     g.msgbox('Error: invalid pack or password. Exiting.')
     exit(6)
     
 try:
     cert=c.dump_certificate(c.FILETYPE_PEM, p12.get_certificate())
-    certfile=open('client.crt','w')
+    certfile=open('client.crt','wb')
     certfile.write(cert)
     certfile.close()
 
     key=c.dump_privatekey(c.FILETYPE_PEM, p12.get_privatekey())
     rsakey=RSA.importKey(key)
-    keyfile=open('client.key','w')
+    keyfile=open('client.key','wb')
     keyfile.write(rsakey.exportKey())
     keyfile.close()
     os.chmod('client.key', 400)
 
     cacert=c.dump_certificate(c.FILETYPE_PEM, p12.get_ca_certificates()[0])
-    cacertfile=open('whoisxmlapi.ca','w')
+    cacertfile=open('whoisxmlapi.ca','wb')
     cacertfile.write(cacert)
     cacertfile.close()
 except:
