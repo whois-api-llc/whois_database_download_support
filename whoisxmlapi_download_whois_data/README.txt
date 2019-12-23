@@ -4,7 +4,7 @@ Whois data download utility
 
 download_whois_data.py
 
-Release version 1.0.0 dated 2019-12-10.
+Release version 1.0.1 dated 2019-12-23.
 
 Copyright (c) 2010-2017 Whois API, Inc.  http://www.whoisxmlapi.com
 -------------------------------------------------------------------
@@ -291,8 +291,14 @@ the  file does  not match  its downloaded  md5 sum.   This process  is
 repeated 5  (or maxtries) times. For  instance, if there was  a broken
 downloaded process, and some files  exist but they are broken, running
 the script  again will notice this  upon the md5 check  and redownload
-the file.   If there  is no  md5 checksum  for the  file, the  file is
-downloaded but reported as unverified in the script output.
+the  file. The  script resumes  the downloading  of a  broken file  by
+default. So  if the file  changed on the  server for some  reason, the
+broken  file will  be continued  anyway, but  it will  be redownloaded
+because of  the md5 mismatch. If  the --no-resume option is  given, no
+attempt  is made  to continue  a broken  download, the  files will  be
+redownloaded from  scratch if necessary.  If there is no  md5 checksum
+for the file, the file is downloaded but reported as unverified in the
+script output.
 
 When  completed, the  script  will  report the  files  which were  not
 available  for download.  Note that  this maybe  normal, e.g.  in some

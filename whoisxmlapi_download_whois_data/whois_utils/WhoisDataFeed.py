@@ -78,12 +78,17 @@ class WhoisDataFeed:
         self.feed_name = None
         self.data_format = None
         self.maxtries = 5
+        self.no_resume = False
         self.authtype = 'password'
         
     def set_maxtries(self, maxtries):
         """Set the maximum number of download attempts"""
         if maxtries != None:
             self.maxtries = maxtries
+    def set_no_resume(self, no_resume):
+        """Set no_resume mode to the given value"""
+        self.no_resume = no_resume
+
     def set_feed_type(self, config_dir, feed_name, data_format):
         """Basic config of this feed.
         Sets up its basic data from the file feeds.ini.
@@ -462,7 +467,9 @@ class WhoisDataFeed:
                                 self.failed.append(downloadurl_base)
                     #We do the main job here: downloading
                         for downloadurl in download_urls:
-                            success = whois_web_download_utils.web_download_and_check_file(downloadurl, md5url, self.session, thistargetdir, self.maxtries)
+                            success = whois_web_download_utils.web_download_and_check_file(
+                                downloadurl, md5url, self.session, thistargetdir, self.maxtries,
+                                no_resume=self.no_resume)
                             if success:
                                 print_verbose('SUCCESS: downloaded %s.' % (downloadurl))
                                 self.downloaded.append(downloadurl)
@@ -484,7 +491,9 @@ class WhoisDataFeed:
                             success = whois_web_download_utils.web_download_and_check_file(downloadurl,
                                                                                            md5url,
                                                                                            self.session,
-                                                                                           thistargetdir, self.maxtries)
+                                                                                           thistargetdir,
+                                                                                           self.maxtries,
+                                                                                           no_resume=self.no_resume)
                             if success:
                                 print_verbose('SUCCESS: downloaded %s.' % (downloadurl))
                                 self.downloaded.append(downloadurl)

@@ -71,9 +71,15 @@ It is designed to meet the following requirements:
  reports on files which were not possible to download.
 
 -It downloads md5 checksums before each file whenever available. Files
- which already exist  in the target directory are  redownloaded if and
- only if  their checksum differs from  the checksum on the  server. In
- this way it can be used to verify or synchronize a local file set.
+ which already exist  in the target directory are  newly downloaded if
+ and  only  if  their  checksum  differs  from  the  checksum  on  the
+ server. In this way  it can be used to verify  or synchronize a local
+ file set.
+
+-The downloading  of already  existing (partial)  files is  resumed by
+ default. This  can be overridden  by the --no-resume option:  in this
+ case, existent files not matching their md5 sums are downloaded again
+ from scratch.
 
 
 2. The download process
@@ -127,7 +133,7 @@ For each file, the following logic is followed:
 feeds support  it, this step is  skipped if the feed  does not support
 md5 checksums.)
 
-2.  The  existence of  the local  file with the  same md5  checksum is
+2.  The  consistency of the local  file with the same  md5 checksum is
 verified. If the  file is there and consistent with  its md5 checksum,
 the downloading of the file is  considered as complete and the process
 is finished for this file.
@@ -140,7 +146,8 @@ process is finished for the file.
 
 4. The downloading of the file is initiated after the download process
 (regardless of its  success), the process is repeated from  step 1 for
-the file.
+the file. By  default the downloading of an  existent, possibly broken
+download is resumed.
 
 Phase III: report and exit.
 

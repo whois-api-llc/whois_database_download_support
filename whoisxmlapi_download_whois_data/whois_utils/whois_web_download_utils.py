@@ -68,7 +68,7 @@ def calc_md5( path_filename ):
     return hash_md5.hexdigest()
 
 
-def web_download_and_check_file(url, md5url, session, output_dir, maxtries):
+def web_download_and_check_file(url, md5url, session, output_dir, maxtries, no_resume):
     """Given a session, downloads the file and its md5. If it fails according to the md5, retries maxtries times"""
     filename = os.path.basename(urlparse(url).path)
     filename = os.path.abspath(os.path.join(output_dir, filename))
@@ -81,12 +81,13 @@ def web_download_and_check_file(url, md5url, session, output_dir, maxtries):
     gotit = False
     force = False
     giveup = False
+    resume = not no_resume
     ntries = 0
     while not gotit and not giveup and ntries < maxtries:
         print_verbose('Verified download of %s: attempt #%d' % (url, ntries+1))
-        gotfile = web_download_file(url, session, output_dir, maxtries, force)
+        gotfile = web_download_file(url, session, output_dir, maxtries, force, resume=resume)
         if md5url != None:
-            gotmd5 = web_download_file(md5url, session, output_dir, maxtries, force)
+            gotmd5 = web_download_file(md5url, session, output_dir, maxtries, force, resume=False)
         else:
             gotmd5 = False
         if gotfile and gotmd5:
@@ -106,7 +107,7 @@ def web_download_and_check_file(url, md5url, session, output_dir, maxtries):
     return gotit
         
         
-def web_download_file(url, session, output_dir, maxtries, force):
+def web_download_file(url, session, output_dir, maxtries, force, resume=True):
     """Given a session, downloads the file into the directory. Creates the directory if it does not exists.
     if force, downloads also if it does not exist"""
 
@@ -120,21 +121,33 @@ def web_download_file(url, session, output_dir, maxtries, force):
     url_print = os.path.basename(url)
     # Redownload file, if problem occurs with network
     ntries = 0
-    if os.path.isfile(filename) and not force:
-        print_verbose('File %s exists. Not downloading again now.' % (filename))
+    if os.path.isfile(filename) and (not force) and (not resume):
+        print_verbose('File %s exists.' % (filename))
         return(True)
     else:
         while ntries < maxtries:
             print_debug('Try #%d' % (ntries + 1))
+            resume_header = None
+            already_have = 0
+            if resume:
+                file_open_mode='ab'
+                try:
+                    already_have = os.path.getsize(filename)
+                    print_verbose("Already have: %d bytes of the file, trying to resume." % already_have)
+                except:
+                    print_verbose("No partial file to resume.")
+                resume_header = {'Range': 'bytes=%d-' % already_have}
+            else:
+                file_open_mode='wb'
             try:
-                r = session.get(url, stream=True, timeout=30)
+                r = session.get(url, stream=True, timeout=30, headers=resume_header)
                 print_debug('Status code: %s' % r.status_code)
-                if r.status_code == 200:
-                    with open(filename, 'wb') as out:
+                if r.status_code in set([200, 206]):
+                    with open(filename, file_open_mode) as out:
                         if( 'content-length' in (r.headers) ):
-                            dl_total_length = int(r.headers.get('content-length'))
+                            dl_total_length = int(r.headers.get('content-length')) + already_have
                             print_debug('Total length: %s' % (str(dl_total_length)))
-                        dl_size=0
+                        dl_size=already_have
                         dl_start_chunk = datetime.datetime.now()
 
                         sys.stdout.write("\r                                                    ")
@@ -159,6 +172,8 @@ def web_download_file(url, session, output_dir, maxtries, force):
                     sys.stdout.write("\r{0} [OK]                          ".format(url_print))
                     sys.stdout.flush()
                                     # print "File has been downloaded successfully."
+                elif r.status_code == 416:
+                    print("File of correct size already there")
                 elif r.status_code == 401:
                     print("HTTP %s Unauthorized. Login credentials are wrong." % r.status_code)
                     return False
@@ -172,19 +187,19 @@ def web_download_file(url, session, output_dir, maxtries, force):
                     return False
                     # print "Error HTTP %s File Not Found" % r.status_code
             except requests.exceptions.Timeout or requests.exceptions.ConnectionError:
-                sys.stdout.write("\rNetwork timed out. Attempting redownload..")
+                sys.stdout.write("\rNetwork timed out. Attempting redownload or resume.")
                 sys.stdout.flush()
                 time.sleep(4)
                 ntries += 1
                 continue
             except requests.exceptions.ConnectionError or requests.exceptions.ChunkedEncodingError:
-                sys.stdout.write("\rNetwork timed out. Attempting redownload..")
+                sys.stdout.write("\rNetwork timed out. Attempting redownload or resume..")
                 sys.stdout.flush()
                 time.sleep(4)
                 ntries += 1
                 continue
             except requests.exceptions.ChunkedEncodingError:
-                sys.stdout.write("\rChunked Encoding Error. Redownloading")
+                sys.stdout.write("\rChunked Encoding Error. Redownloading or resuming")
                 sys.stdout.flush()
                 time.sleep(4)
                 ntries += 1

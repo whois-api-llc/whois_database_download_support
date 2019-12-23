@@ -19,7 +19,7 @@ import whois_utils.whois_user_interaction as whois_user_interaction
 from whois_utils.whois_user_interaction import *
 
 # GlobalSettings
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 MYNAME = sys.argv[0].replace('./', '')
 MYDIR = os.path.abspath(os.path.dirname(__file__))
 FEEDCONFIGDIR = MYDIR
@@ -52,6 +52,9 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
     parser.add_argument('-d', '--debug', help='Debug mode, even more messages', action='store_true')
     parser.add_argument('--maxtries',
                         help='Maximum number of tries when downloading. Defaults to 5.')
+    parser.add_argument('--no-resume',
+                        help='Disable resuming the download of a partially or completely downloaded file',
+                        action='store_true')
     parser.add_argument('--interactive',
                         help='\n'.join([
                             'Interactive mode.',
@@ -166,6 +169,7 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
     for dataformat in args['dataformats']:
         the_feed = wdf.WhoisDataFeed()
         the_feed.set_maxtries(args['maxtries'])
+        the_feed.set_no_resume(args['no_resume'])
         the_feed.set_feed_type(FEEDCONFIGDIR, args['feed'], dataformat)
         feeds.append(the_feed)
 
@@ -286,6 +290,7 @@ else:
     args['keyfile'] = MYDIR + '/client.key'
     args['verbose'] = True
     args['debug'] = False
+    args['no_resume'] = False
     # Default window title
     windowtitle = 'WhoisXML API MySQL data downloader script'
 
