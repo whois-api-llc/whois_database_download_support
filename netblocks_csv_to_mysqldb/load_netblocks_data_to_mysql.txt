@@ -374,7 +374,7 @@ Table of Contents
   • The version number of the script you are using. This can be obtained
     by invoking
     ┌────
-    │ ./load_netblocks_data_to_mysql.org
+    │ ./load_netblocks_data_to_mysql.py --version
     └────
     we need the the information in the first output line, e.g.
     load_netblocks_data_to_mysql.py ver. 0.0.1

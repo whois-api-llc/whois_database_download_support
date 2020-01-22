@@ -289,7 +289,7 @@ In addition to your comment, please provide the following information:
 - The version number of the script you are using. This can be obtained
   by invoking
   #+BEGIN_SRC bash 
-  ./load_netblocks_data_to_mysql.org
+  ./load_netblocks_data_to_mysql.py --version
   #+END_SRC
   we need the the information in the first output line, e.g.
   load_netblocks_data_to_mysql.py ver. 0.0.1
