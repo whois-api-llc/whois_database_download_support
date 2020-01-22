@@ -9,9 +9,14 @@ import os
 import argparse
 import pandas as pd
 import mysql.connector as my
+REMARKS_FIELD=True
+try:
+    import sqlescapy
+except:
+    sys.stdout.write('WARNING: Python package sqlescapy not installed. Will not import the "remark" fields.')
+    REMARKS_FIELD = False
 
-
-VERSION = "0.0.1"
+VERSION = "0.0.2"
 MYNAME = sys.argv[0].replace('./', '')
 
 parser = argparse.ArgumentParser(description='''
@@ -25,7 +30,7 @@ See usage examles in the supplied README file.''',
 parser.add_argument('--version',
                     help='Print version information and exit.',
                     action='version',
-                    version=MYNAME + ' ver. ' + VERSION + '\n(c) WhoisXML API LLC.')
+                    version=MYNAME + ' ver. ' + VERSION + '\n(c) WhoisXML API Inc.')
 parser.add_argument('--quiet', action='store_true', help='Suppress all informative messages.')
 parser.add_argument('--mysql-host', default='127.0.0.1', type=str,
                     help='Host name or IP address to reach MySQL server (optional). Default: localhost.')
@@ -110,7 +115,7 @@ netblocksFullFieldnames = ['inetnum', 'inetnumFirst', 'inetnumLast',
                     'modified', 'country', 'city', 'org_id', 'abuse_contacts',
                     'admin_contacts', 'tech_contacts', 'maintainers',
                     'domain_maintainers', 'lower_maintainers', 'routes_maintainers',
-                    'source']
+                    'source', 'remarks', 'as_type']
 netblocksTableName = args.table_prefix + 'netblocks'
 netblocksSchema = {'inetnum': ('varchar', 33),
                    'inetnumFirst': ('bigint', None),
@@ -124,7 +129,9 @@ netblocksSchema = {'inetnum': ('varchar', 33),
                    'country': ('varchar', 2),
                    'city': ('varchar', 16),
                    'org_id': ('varchar', 64),
-                   'source': ('varchar', 8)}
+                   'source': ('varchar', 8),
+                   'remarks': ('text', None),
+                   'as_type':('varchar', 32)}
 netblocksSchemaPK = 'inetnum'
 #Initial guess form ax lengths
 inetnum_maxlength = 33
@@ -361,8 +368,13 @@ if args.netblocks_file != None:
                                 insertstring += comma + datetime.datetime.strptime(
                                     row[fieldname], "%Y-%m-%dT%H:%M:%SZ").strftime(
                                         '\'%Y-%m-%d %H:%M:%S\'')
+                            elif fieldname == 'remarks':
+                                if REMARKS_FIELD:
+                                    insertstring += comma + "'%s'" % sqlescapy.sqlescape(row['remarks'])
+                                else:
+                                    insertstring += comma + 'Null'
                             else:
-                                insertstring += comma + "%s" % row[fieldname]
+                                insertstring += comma + "'%s'" % row[fieldname]
                         comma = ','
                 if args.r_tree_index:
                     insertstring += ", ST_GEOMFROMWKB(ST_AsWKB(Polygon(LineString(Point(%f,-1),Point(%f,-1),Point(%f,1),Point(%f,1), Point(%f, -1)))),0)" % (

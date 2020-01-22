@@ -13,6 +13,9 @@ The actual version of the script is hosted on github under
 
 https://github.com/whois-api-llc/whois_database_download_support/tree/master/netblocks_csv_to_mysqldb
 
+** Changelog
+- 0.0.1: Initial version
+- 0.0.2: Updated for modified data format including "remarks" and "as_type" fields
 ** A usable demonstration script
 The script is intended to be a programming example of how to
 accomplish this task and also to be useful as it is. For this reason
@@ -137,10 +140,14 @@ The loader script is written in Series 3 Python; it was tested with
 Python 3.6.7. on Linux and Python 3.7.2 on Windows. It uses the
 following libraries:
 
-- Pandas (https://pandas.pydata.org/) , a data analysis library, in
+- Pandas (https://pandas.pydata.org/) :: , a data analysis library, in
   order to efficiently load chunks of csv files.
-- MySQL connector: the library to access MySQL databases, provided by
+- MySQL connector :: the library to access MySQL databases, provided by
   Oracle.
+- sqlescapy :: to help importing the multiline field "remarks" of the
+               ~netblocks~ table. If not installed, a warning is
+               raised at the beginning of the import, and all
+               "remarks" fields will be set to ~NULL~.
 
 While Pandas can be simply installed with the package manager ("pip
 install pandas"), the vanilla MySQL connector is available from its

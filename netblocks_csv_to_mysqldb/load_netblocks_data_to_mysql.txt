@@ -12,8 +12,9 @@ Table of Contents
 
 1 About the script
 .. 1.1 Script availability
-.. 1.2 A usable demonstration script
-.. 1.3 Specifications
+.. 1.2 Changelog
+.. 1.3 A usable demonstration script
+.. 1.4 Specifications
 2 Downloading data, data specs
 3 Prerequisites
 .. 3.1 MySQL settings
@@ -47,7 +48,15 @@ Table of Contents
   [https://github.com/whois-api-llc/whois_database_download_support/tree/master/netblocks_csv_to_mysqldb]
 
 
-1.2 A usable demonstration script
+1.2 Changelog
+─────────────
+
+  • 0.0.1: Initial version
+  • 0.0.2: Updated for modified data format including "remarks" and
+    "as_type" fields
+
+
+1.3 A usable demonstration script
 ─────────────────────────────────
 
   The script is intended to be a programming example of how to
@@ -58,7 +67,7 @@ Table of Contents
   properly, however, it is can be used efficiently.
 
 
-1.3 Specifications
+1.4 Specifications
 ──────────────────
 
   Before using the script it is important to understand what it exactly
@@ -190,10 +199,15 @@ Table of Contents
   Python 3.6.7. on Linux and Python 3.7.2 on Windows. It uses the
   following libraries:
 
-  • Pandas ([https://pandas.pydata.org/]) , a data analysis library, in
-    order to efficiently load chunks of csv files.
-  • MySQL connector: the library to access MySQL databases, provided by
-    Oracle.
+  Pandas ([https://pandas.pydata.org/]): , a data analysis library, in order
+                                         to efficiently load chunks of csv
+                                         files.
+  MySQL connector: the library to access MySQL databases, provided by
+                   Oracle.
+  sqlescapy: to help importing the multiline field "remarks" of the
+             `netblocks' table. If not installed, a warning is raised at
+             the beginning of the import, and all "remarks" fields will be
+             set to `NULL'.
 
   While Pandas can be simply installed with the package manager ("pip
   install pandas"), the vanilla MySQL connector is available from its
