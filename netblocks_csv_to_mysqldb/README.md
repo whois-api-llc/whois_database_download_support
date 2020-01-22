@@ -6,7 +6,7 @@ from a Whois XML netblocks database subscription
 
 (c) Whois XML API, Inc. 2019.
 
-ver. 0.0.1
+ver. 0.0.2
 
 (first beta release)
 
