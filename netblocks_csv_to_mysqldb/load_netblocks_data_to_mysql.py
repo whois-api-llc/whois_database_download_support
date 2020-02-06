@@ -16,7 +16,7 @@ except:
     sys.stdout.write('WARNING: Python package sqlescapy not installed. Will not import the "remark" fields.')
     REMARKS_FIELD = False
 
-VERSION = "0.0.2"
+VERSION = "0.0.3"
 MYNAME = sys.argv[0].replace('./', '')
 
 parser = argparse.ArgumentParser(description='''
@@ -155,8 +155,8 @@ def fieldlengthsfromschema(tablename):
     maximum field lengths for the columns of the table
     """
     cursor.execute(
-        "select COLUMN_NAME,DATA_TYPE,CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS where TABLE_NAME=%s",
-        (tablename,))
+        "select COLUMN_NAME,DATA_TYPE,CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS where TABLE_NAME=%s and TABLE_SCHEMA=%s",
+        (tablename, args.mysql_database,))
     columns = {}
     for column in cursor.fetchall():
         columns[column['COLUMN_NAME']] = (column['DATA_TYPE'], column['CHARACTER_MAXIMUM_LENGTH'])
