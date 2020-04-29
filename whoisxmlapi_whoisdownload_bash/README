@@ -1,5 +1,8 @@
 Changes
 ------
+0.0.24.
+  o Added support for data feeds domain_names_dropped_whois_archive
+  	and ngtlds_domain_names_dropped_whois_archive
 
 0.0.23.
   o Messages and return codes for whois_database_combined feed

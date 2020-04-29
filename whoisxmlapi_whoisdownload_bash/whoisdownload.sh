@@ -11,7 +11,7 @@ LOGIN_PASSWORD=""
 #
 LANG=C
 LC_ALL=C
-VERSION="0.0.23"
+VERSION="0.0.24"
 VERBOSE="no"
 WGETPROGRESS=""
 DEBUG="no"
@@ -119,6 +119,7 @@ function printHelpAndExit()
       o domain_names_diff_whois_filtered_reg_country2
       o domain_names_whois_filtered_reg_country_noproxy
       o domain_names_whois_archive
+      o domain_names_dropped_whois_archive
       o domain_names_whois_filtered_reg_country_archive
       o domain_names_whois_filtered_reg_country_noproxy_archive
       o whois_record_delta_whois
@@ -130,6 +131,7 @@ function printHelpAndExit()
       o ngtlds_domain_names_whois_filtered_reg_country
       o ngtlds_domain_names_whois_filtered_reg_country_noproxy
       o ngtlds_domain_names_whois_archive
+      o ngtlds_domain_names_dropped_whois_archive
       o ngtlds_domain_names_whois_filtered_reg_country_archive
       o ngtlds_domain_names_whois_filtered_reg_country_noproxy_archive
       o domain_names_whois2
@@ -680,6 +682,7 @@ function supportedTldsThird()
         "$feed" == "ngtlds_domain_names_dropped" -o \
         "$feed" == "ngtlds_domain_names_dropped_whois" -o \
         "$feed" == "ngtlds_domain_names_whois_archive" -o \
+        "$feed" == "ngtlds_domain_names_dropped_whois_archive" -o \
         "$feed" == "ngtlds_domain_names_whois_filtered_reg_country" -o \
         "$feed" == "ngtlds_domain_names_whois_filtered_reg_country_archive" -o \
         "$feed" == "ngtlds_domain_names_whois_filtered_reg_country_noproxy" -o \
@@ -769,9 +772,10 @@ function data_feed_parent_dir()
          "$feed" == "domain_names_dropped_whois" -o \
          "$feed" == "domain_names_whois" -o \
          "$feed" == "domain_names_whois_filtered_reg_country" -o \
-	 "$feed" == "domain_names_diff_whois_filtered_reg_country2" -o \
+         "$feed" == "domain_names_diff_whois_filtered_reg_country2" -o \
          "$feed" == "domain_names_whois_filtered_reg_country_noproxy" -o \
          "$feed" == "domain_names_whois_archive" -o \
+         "$feed" == "domain_names_dropped_whois_archive" -o \
          "$feed" == "domain_names_whois_filtered_reg_country_archive" -o \
          "$feed" == "domain_names_whois_filtered_reg_country_noproxy_archive" -o \
          "$feed" == "whois_record_delta_whois" -o \
@@ -786,6 +790,7 @@ function data_feed_parent_dir()
         "$feed" == "ngtlds_domain_names_whois_filtered_reg_country_archive" -o \
         "$feed" == "ngtlds_domain_names_whois_filtered_reg_country_noproxy_archive" -o \
         "$feed" == "ngtlds_domain_names_whois_archive" -o \
+        "$feed" == "ngtlds_domain_names_dropped_whois_archive" -o \
         "$feed" == "ngtlds_domain_names_whois" ]; then
         echo "ngtlds_domain_name_data/${feed#ngtlds_}"
     elif [ "$feed" == "cctld_discovered_domain_names_new" -o \
@@ -1014,6 +1019,7 @@ function allFeeds()
         domain_names_diff_whois_filtered_reg_country2 \
         domain_names_whois_filtered_reg_country_noproxy \
         domain_names_whois_archive \
+        domain_names_dropped_whois_archive \
         domain_names_whois_filtered_reg_country_archive \
         domain_names_whois_filtered_reg_country_noproxy_archive \
         ngtlds_domain_names_new \
@@ -1090,6 +1096,14 @@ function filePath()
         elif [ "$FILEFORMAT" = "sql" -o "$FILEFORMAT" = "mysqldump" ]; then
             echo "domain_name_data/$feed/${thisyeardir}add_mysqldump_${date_underscore}.tar.gz"
         fi
+	elif [ "$feed" == "domain_names_dropped_whois_archive" ]; then
+        if [ "$FILEFORMAT" = "regular" -o "$FILEFORMAT" = "regular_csv" ]; then
+            echo "domain_name_data/$feed/${thisyeardir}${date_underscore}_${tld}.csv.gz"
+        elif [ "$FILEFORMAT" = "full" -o "$FILEFORMAT" = "full_csv" ]; then
+            echo "domain_name_data/$feed/${thisyeardir}full_${date_underscore}_${tld}.csv.gz"
+        elif [ "$FILEFORMAT" = "sql" -o "$FILEFORMAT" = "mysqldump" ]; then
+            echo "domain_name_data/$feed/${thisyeardir}add_mysqldump_${date_underscore}.tar.gz"
+        fi
     elif [ "$feed" == "domain_names_whois_filtered_reg_country_archive" ]; then
         echo "domain_name_data/$feed/${thisyeardir}filtered_reg_country_${date_underscore}_${tld}.tar.gz"
     elif [ "$feed" == "domain_names_whois_filtered_reg_country_noproxy_archive" ]; then
@@ -1149,6 +1163,14 @@ function filePath()
             echo "ngtlds_domain_name_data/domain_names_whois_archive/${thisyeardir}full_${date_underscore}_${tld}.csv.gz"
         elif [ "$FILEFORMAT" = "sql" -o "$FILEFORMAT" = "mysqldump" ]; then
             echo "ngtlds_domain_name_data/domain_names_whois_archive/${thisyeardir}add_mysqldump_${date_underscore}.tar.gz"
+        fi
+	elif [ "$feed" == "ngtlds_domain_names_dropped_whois_archive" ]; then
+        if [ "$FILEFORMAT" = "regular" -o "$FILEFORMAT" = "regular_csv" ]; then
+            echo "ngtlds_domain_name_data/domain_names_dropped_whois_archive/${thisyeardir}${date_underscore}_${tld}.csv.gz"
+        elif [ "$FILEFORMAT" = "full" -o "$FILEFORMAT" = "full_csv" ]; then
+            echo "ngtlds_domain_name_data/domain_names_dropped_whois_archive/${thisyeardir}full_${date_underscore}_${tld}.csv.gz"
+        elif [ "$FILEFORMAT" = "sql" -o "$FILEFORMAT" = "mysqldump" ]; then
+            echo "ngtlds_domain_name_data/domain_names_dropped_whois_archive/${thisyeardir}add_mysqldump_${date_underscore}.tar.gz"
         fi
     elif [ "$feed" == "ngtlds_domain_names_whois_filtered_reg_country_archive" ]; then
         echo "$(data_feed_parent_dir ${feed})/${thisyearmonthdir}/filtered_reg_country_${date_underscore}_${tld}.tar.gz"
@@ -1605,13 +1627,15 @@ function downloadForTld()
        [    "${feed}" == "domain_names_dropped_whois" -o \
             "${feed}" == "domain_names_whois" -o \
             "${feed}" == "domain_names_whois_archive" -o \
+            "${feed}" == "domain_names_dropped_whois_archive" -o \
             "${feed}" == "whois_record_delta_whois" -o \
             "${feed}" == "ngtlds_domain_names_dropped_whois" -o \
             "${feed}" == "ngtlds_domain_names_whois" -o \
             "${feed}" == "ngtlds_domain_names_whois_archive" -o \
+            "${feed}" == "ngtlds_domain_names_dropped_whois_archive" -o \
             "${feed}" == "domain_names_whois2" -o \
             "${feed}" == "cctld_discovered_domain_names_whois" -o \
-	    "${feed}" == "cctld_discovered_domain_names_whois_archive" -o \
+            "${feed}" == "cctld_discovered_domain_names_whois_archive" -o \
             "${feed}" == "cctld_registered_domain_names_whois" -o \
             "${feed}" == "cctld_registered_domain_names_dropped_whois" -o \
             "${feed}" == "whois_database" -o \
