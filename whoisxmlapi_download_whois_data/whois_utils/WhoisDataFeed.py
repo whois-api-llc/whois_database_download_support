@@ -80,6 +80,7 @@ class WhoisDataFeed:
         self.maxtries = 5
         self.no_resume = False
         self.authtype = 'password'
+        self.download_premature = True
         
     def set_maxtries(self, maxtries):
         """Set the maximum number of download attempts"""
@@ -89,6 +90,10 @@ class WhoisDataFeed:
         """Set no_resume mode to the given value"""
         self.no_resume = no_resume
 
+    def set_download_premature(self, download_premature):
+        """Force downloading premature files"""
+        self.download_premature = download_premature
+        
     def set_feed_type(self, config_dir, feed_name, data_format):
         """Basic config of this feed.
         Sets up its basic data from the file feeds.ini.
@@ -116,22 +121,30 @@ class WhoisDataFeed:
                 % (feed_name, data_format))
         #optional arguments
         try:
-            self.md5path=self.feeds_config.get(feed_name + '__' + data_format, 'md5_path')
+            self.md5path = self.feeds_config.get(feed_name + '__' + data_format, 'md5_path')
         except:
-            self.md5path=None
+            self.md5path = None
         try:
-            self.md5mask=self.feeds_config.get(feed_name + '__' + data_format, 'md5_mask')
+            self.md5mask = self.feeds_config.get(feed_name + '__' + data_format, 'md5_mask')
         except:
             self.md5mask='$filename.md5'
         try:
-            self.description=self.feeds_config.get(feed_name + '__' + data_format, 'description')
+            self.statuspath = self.feeds_config.get(feed_name + '__' + data_format, 'status_path')
         except:
-            self.description='No description about this feed. Consult the documentation.'
+            self.statuspath = None
+        try:
+            self.download_ready_file = self.feeds_config.get(feed_name + '__' + data_format, 'download_ready_file')
+        except:
+            self.download_ready_file = None
+        try:
+            self.description = self.feeds_config.get(feed_name + '__' + data_format, 'description')
+        except:
+            self.description = 'No description about this feed. Consult the documentation.'
         #tld-independent feeds do not need any tld specificaiton
         try:
-            self.tldindependent=self.feeds_config.get(feed_name + '__' + data_format, 'tldindependent')
+            self.tldindependent = self.feeds_config.get(feed_name + '__' + data_format, 'tldindependent')
         except:
-            self.tldindependent=False
+            self.tldindependent = False
         #Type of the feed, daily/quarterly
         try:
             self.is_daily = self.feeds_config.getboolean(feed_name + '__' + data_format, 'daily_feed')
@@ -385,6 +398,22 @@ class WhoisDataFeed:
             """other feed types: not yet supported"""
             pass
 
+    def check_download_ready_on_day(self, the_date, targetdir):
+        """Checks if the download_ready file is generated for the given daily feed on the given date"""
+        if self.is_quarterly or self.download_ready_file is None:
+            #This function works only for daily feeds
+            print_verbose("Dowload ready check unsupported for feed: %s format: %s date: %s."%(
+                self.feed_name,
+                self.data_format,
+                the_date.strftime("%Y-%m-%d")))
+            return True
+        mask = self.substitute_mask(self.download_ready_file,
+                                    '', '',the_date, '')
+        url = self.main_url + '/' + self.statuspath + '/' + mask
+        print(url)
+        dlready = whois_web_download_utils.web_download_file(url, self.session, targetdir, self.maxtries, True)
+        return dlready
+
     def set_supported_tlds(self, feed):
         """sets the list of tlds of the feed to that of another feed
         if the feed name is the same, only the data format differs"""
@@ -412,6 +441,7 @@ class WhoisDataFeed:
         """This will download the data of the feed into the given directory"""
         self.downloaded = []
         self.failed = []
+        self.premature = []
         if self.is_quarterly:
             """quarterly feeds: single date"""
             self.update_supported_tlds()
@@ -428,10 +458,11 @@ class WhoisDataFeed:
             for mask in self.download_masks:
                 for day in range(ndays):
                     #First we check that it is not an earlier day from an archive feed
-                    thisdaysyear = (startdate + datetime.timedelta(days=day)).year
+                    thisday = startdate + datetime.timedelta(days=day)
+                    thisdaysyear = thisday.year
                     if self.download_masks_archive == None or (
                             self.download_masks != None and thisdaysyear == datetime.date.today().year):
-                        thismask = self.actual_url(mask, self.dbversion, tld, (startdate + datetime.timedelta(days=day)))
+                        thismask = self.actual_url(mask, self.dbversion, tld, thisday)
                         downloadurl = mainurl + '/' + thismask
                         if self.is_daily:
                             thistargetdir=os.path.dirname(os.path.abspath(os.path.join(targetdir, self.feed_name, thismask)))
@@ -443,12 +474,30 @@ class WhoisDataFeed:
                             md5url = downloadurl + '.md5'
                         elif self.md5path != None:
                             thefilename = thismask.split('/')[-1]
-                            thismd5file = self.substitute_mask(self.md5mask, self.dbversion, tld, (startdate + datetime.timedelta(days=day)), thefilename)
+                            thismd5file = self.substitute_mask(self.md5mask, self.dbversion, tld, thisday, thefilename)
                             md5url = mainurl + '/' + self.md5path + '/' + thismd5file
                         else:
                             #md5 unsupported
                             md5url = None
-
+                        #checking download ready
+                        if self.is_daily:
+                            dlready = self.check_download_ready_on_day(thisday,
+                                                                       os.path.join(targetdir, self.feed_name, str(self.statuspath)))
+                            if not dlready:
+                                self.premature.append("%s %s %s"%(self.feed_name,
+                                                                 self.data_format,
+                                                                 thisday.strftime("%Y-%m-%d")))
+                                if self.download_premature:
+                                    print_verbose("Warning NOT READY in feed: %s format: %s date: %s, may download partial files."%(
+                                    self.feed_name,
+                                    self.data_format,
+                                    thisday.strftime("%Y-%m-%d")))
+                                else:
+                                    print_verbose("Files NOT READY in feed: %s format: %s date: %s, skipping."%(
+                                    self.feed_name,
+                                    self.data_format,
+                                    thisday.strftime("%Y-%m-%d")))
+                                    continue
                         #this list is only for $ALLFILES where is no md5 support anyway
                         download_urls=[]
                         if not re.search(r'\$ALLFILES', downloadurl):

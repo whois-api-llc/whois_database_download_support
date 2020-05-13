@@ -4,7 +4,12 @@ Whois data download utility
 
 download_whois_data.py
 
+2020-05-13
+----------
+- Introduced a mechanism to detect premature daily downloads.
+
 2019-12-10
+----------
 
 - The script is made Python 3 compatible, the documentation has been
   amended accordingly.

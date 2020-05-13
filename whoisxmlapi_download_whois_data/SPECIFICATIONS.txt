@@ -129,6 +129,13 @@ The script loops through the list of files to be downloaded.
 
 For each file, the following logic is followed:
 
+0. In case of daily feeds for which a mechanism indicating whether the
+data of  the feed  on the given  day in the  given format  exists, the
+script checks if the data are  complete. If the data are incomplete, a
+warning  will be  given. If  the  --no-premature option  is used,  the
+download of the data  in the given format from the  given feed and the
+given day will be skipped.
+
 1. The  md5 checksum of the  file is downloaded from  the server (Most
 feeds support  it, this step is  skipped if the feed  does not support
 md5 checksums.)
@@ -199,6 +206,9 @@ is generated if there were unavailable files.
    (Possible causes: no file on the server because not yet generated,
     no file on the server because there was no change in the tld on
     the given day, etc.)
+
+3: Premature daily data. Some daily data in some format for some days
+   were not yet finalized on the server.
 
 6: Informational or canceled action.
    Possible causes are:

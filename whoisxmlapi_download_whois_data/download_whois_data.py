@@ -19,7 +19,7 @@ import whois_utils.whois_user_interaction as whois_user_interaction
 from whois_utils.whois_user_interaction import *
 
 # GlobalSettings
-VERSION = "1.0.1"
+VERSION = "2.0.0"
 MYNAME = sys.argv[0].replace('./', '')
 MYDIR = os.path.abspath(os.path.dirname(__file__))
 FEEDCONFIGDIR = MYDIR
@@ -55,6 +55,9 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
     parser.add_argument('--no-resume',
                         help='Disable resuming the download of a partially or completely downloaded file',
                         action='store_true')
+    parser.add_argument('--no-premature',
+                        help='Do not download files from daily feedds if the completion indicator is not there. Only effects daily feeds having download_ready_files',
+                        action='store_true') 
     parser.add_argument('--interactive',
                         help='\n'.join([
                             'Interactive mode.',
@@ -275,6 +278,7 @@ else:
     # Interacitve version with easygui
     args = {}
     DIALOG_COMMUNICATION = True
+    args['no_premature'] = False
     #With dialogs we are always verbose but never debug
     whois_user_interaction.VERBOSE = True
     whois_user_interaction.DEBUG = False
@@ -484,22 +488,42 @@ print_verbose('Tlds(s) (only the supported ones): %s' % (str(args['tlds']),))
 
 # The main job will start here
 total_failed = []
+total_premature = []
 for f in feeds:
+    f.set_download_premature(not args['no_premature'])
     f.download_feed_into_directory(args['tlds'], args['output_dir'])
     total_failed += f.failed
+    total_premature += f.premature
+    total_premature = list(set(total_premature))
 # removing duplicates as some feeds might download redundantly
 total_failed = list(set(total_failed))
 print_verbose('Download finished.')
+all_ok = True
 if len(total_failed) > 0:
-    print_verbose('The following URLs have failed (probably they do not exist.)')
+    print_verbose('The following URLs have failed (probably they do not exist.):')
     for u in total_failed:
         print_verbose(u)
     print_verbose('Re-run with the same settings to retry, but this maybe normal.')
     retcode = 2
-else:
+    all_ok = False
+    
+if len(total_premature) > 0:
+    print_verbose('The data in the following feeds in the formats on the listed dates were not completely generated when downloading:')
+    for s in sorted(total_premature):
+        print_verbose("\t" + s)
+    if args['no_premature']:
+        print_verbose("The respective downloads were skipped, try again later.")
+    else:
+        print_verbose("The downloaded files can be missing or incomplete.")
+    all_ok = False
+    retcode = 3
+    
+if all_ok:
     print_verbose('Everything has been downloaded successfully.')
     retcode = 0
-    
+
+
+
 if DIALOG_COMMUNICATION:
     _ = g.msgbox('\n'.join([
         '%s has finished its activity.',

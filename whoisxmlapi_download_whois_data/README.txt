@@ -285,6 +285,19 @@ to  download  each  file  (can   be  overridden  with  the  --maxtries
 option). After 5 tries it will give  up. However, if the file does not
 exist on the server, it gives up immediately.
 
+In daily data feeds (except for archive feeds) there is a mechanism to
+indicate when  the data  of a given  feed in a  given data  format are
+complete on the  server and ready for download. The  readiness of data
+is indicated by a presence of a  specific file on the server; we refer
+to the  data feeds' documentation  for details. The  downloader script
+verifies the presence of these files.  By default it gives warnings if
+the data  aren't complete yet for  the given day, which  may result in
+missing files or downloading partial content. (The missing part of the
+data can be downloaded by repeating the download process with the same
+parameters.) If  the --no-premature  option is used,  no data  will be
+downloaded from the given feed in  the given format for those days for
+which the data are not yet complete.
+
 For each file, and md5 checksum is also downloaded (except for certain
 feeds which do not support md5  checksums. The download is repeated if
 the  file does  not match  its downloaded  md5 sum.   This process  is

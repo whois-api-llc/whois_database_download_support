@@ -50,9 +50,12 @@ def md5_check( path_filename, md5_file_path ):
         with open( md5_file_path ) as md5_file:
             correct_check_sum = md5_file.readline().split()[0].strip()
             if( calc_check_sum == correct_check_sum ):
+                print_verbose("MD5 check passed for %s"%path_filename)
                 return True
+            print_verbose("MD5 check failed for %s"%path_filename)
             return False
-    except:
+    except Exception as e:
+        print_verbose("Exception in MD5 check for %s:\n%s"%(path_filename,str(e)))
         return False
 
 def calc_md5( path_filename ):
@@ -87,7 +90,7 @@ def web_download_and_check_file(url, md5url, session, output_dir, maxtries, no_r
         print_verbose('Verified download of %s: attempt #%d' % (url, ntries+1))
         gotfile = web_download_file(url, session, output_dir, maxtries, force, resume=resume)
         if md5url != None:
-            gotmd5 = web_download_file(md5url, session, output_dir, maxtries, force, resume=False)
+            gotmd5 = web_download_file(md5url, session, output_dir, maxtries, True, resume=False)
         else:
             gotmd5 = False
         if gotfile and gotmd5:
