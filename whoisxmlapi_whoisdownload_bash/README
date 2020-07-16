@@ -1,5 +1,9 @@
 Changes
 ------
+
+0.0.25.
+  o Removed the use of "realpath" as it is not available on Mac OS X by default.
+
 0.0.24.
   o Added support for data feeds domain_names_dropped_whois_archive
   	and ngtlds_domain_names_dropped_whois_archive

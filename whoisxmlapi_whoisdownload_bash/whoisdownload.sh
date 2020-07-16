@@ -11,7 +11,7 @@ LOGIN_PASSWORD=""
 #
 LANG=C
 LC_ALL=C
-VERSION="0.0.24"
+VERSION="0.0.25"
 VERBOSE="no"
 WGETPROGRESS=""
 DEBUG="no"
@@ -32,7 +32,7 @@ START_DIRECTORY=$PWD
 #default authentication type
 AUTHTYPE="password"
 #default files for ssl auth
-SCRIPT_DIRECTORY=$(realpath $(dirname "${BASH_SOURCE[0]}"))
+SCRIPT_DIRECTORY=$(cd `dirname $0` && pwd)
 CACERTFILE="$SCRIPT_DIRECTORY/whoisxmlapi.ca"
 CERTFILE="$SCRIPT_DIRECTORY/client.crt"
 KEYFILE="$SCRIPT_DIRECTORY/client.key"
