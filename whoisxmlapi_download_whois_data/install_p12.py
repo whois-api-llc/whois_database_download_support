@@ -5,15 +5,22 @@
 import sys
 import os
 from OpenSSL import crypto as c
-from Crypto.PublicKey import RSA
+try:
+    from Crypto.PublicKey import RSA
+    newcryptolib = False
+except ModuleNotFoundError:
+    newcryptolib = True
+    from Cryptodome.PublicKey import RSA
 import easygui as g
 
-windowtitle='WhoisXML API SSL pack converter'
-infile=g.fileopenbox('Choose the pack.p12 file obtained from WhoisXML API Inc.',
+windowtitle = 'WhoisXML API SSL pack converter'
+infile = g.fileopenbox('Choose the pack.p12 file obtained from WhoisXML API Inc.',
                      windowtitle)
-password=g.passwordbox('Enter the password supplied with your pack',
+password = g.passwordbox('Enter the password supplied with your pack',
                        windowtitle)
 
+if newcryptolib:
+    password = bytes(password, encoding='utf-8')
 try:
     p12 = c.load_pkcs12(open(infile, 'rb').read(), password) 
 except:
@@ -21,20 +28,20 @@ except:
     exit(6)
     
 try:
-    cert=c.dump_certificate(c.FILETYPE_PEM, p12.get_certificate())
-    certfile=open('client.crt','wb')
+    cert = c.dump_certificate(c.FILETYPE_PEM, p12.get_certificate())
+    certfile = open('client.crt','wb')
     certfile.write(cert)
     certfile.close()
 
-    key=c.dump_privatekey(c.FILETYPE_PEM, p12.get_privatekey())
-    rsakey=RSA.importKey(key)
-    keyfile=open('client.key','wb')
+    key = c.dump_privatekey(c.FILETYPE_PEM, p12.get_privatekey())
+    rsakey = RSA.importKey(key)
+    keyfile = open('client.key','wb')
     keyfile.write(rsakey.exportKey())
     keyfile.close()
     os.chmod('client.key', 400)
 
-    cacert=c.dump_certificate(c.FILETYPE_PEM, p12.get_ca_certificates()[0])
-    cacertfile=open('whoisxmlapi.ca','wb')
+    cacert = c.dump_certificate(c.FILETYPE_PEM, p12.get_ca_certificates()[0])
+    cacertfile = open('whoisxmlapi.ca','wb')
     cacertfile.write(cacert)
     cacertfile.close()
 except:

@@ -4,8 +4,8 @@ Setting up ssl authentication to use with download_whois_data.py
 
 Provided by WhoisXML API, Inc.
 
-dated: 2018-12-10
-
+dated:   2018-12-10
+updated: 2020-10-02
 
 Contents:
 ---------
@@ -56,19 +56,22 @@ in the main README of the project, you will need two additional Python
 packages.  So as  a root,  or  in an  administrator command-prompt  on
 native Windows systems (prepared to run download_whois_data.py), do
 
-   pip3 install pyOpenSSL pycrypto
+   pip3 install pyOpenSSL pycryptodome
 
-if you are using series 3 Python, and 
+
+if you are using series 3 Python.
+
+On older Python3 versions the legacy pycrypto package may also work:
+
+pip3 install pyOpenSSL pycrypto	
+
+whereas if you use series 2 Python, do
 
    pip2 install pycrypto pyopenssl
 
-if you are using the legacy series 2 Python.
-
-On Windows, instead of "pycrypto" we recommend to use "pycryptodome":
-
-   pip3 install pyOpenSSL pycryptodome
-
-as it is does not need any Visual C++ packages to be installed.
+to  install the  requirements. Alternatively  you may  search for  the
+required  packages  in your  operating  system's  package manager,  or
+create a Python virtual environment.
 
 
 2. Installing the auth credentials
