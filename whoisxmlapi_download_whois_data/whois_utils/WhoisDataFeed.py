@@ -387,10 +387,10 @@ class WhoisDataFeed:
                 url = self.supported_tlds_url.replace('$_date', '').replace('/$year','').replace('/$month','')
                 self.supported_tlds = self.get_url_contents(url).strip().split(',')
                 self.supported_tlds = list(set(self.supported_tlds))
-                try:
-                    self.supported_tlds.remove('')
-                except:
-                    pass
+            try:
+                self.supported_tlds.remove('')
+            except:
+                pass
             if self.supported_tlds == None or self.supported_tlds == []:
                 print_error_and_exit('No tlds found.\n In case of some daily feeds it can be normal:\n it just means that there are no data available for the given day(s).')
             self.supported_tlds = sorted(list(set(self.supported_tlds)))

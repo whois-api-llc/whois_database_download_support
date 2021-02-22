@@ -4,6 +4,10 @@ Whois data download utility
 
 download_whois_data.py
 
+2021-02-22
+----------
+- Fixed a bug in downloading supported tlds lists, affecting --all-tlds option
+
 2020-05-13
 ----------
 - Introduced a mechanism to detect premature daily downloads.
