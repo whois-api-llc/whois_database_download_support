@@ -19,7 +19,7 @@ import whois_utils.whois_user_interaction as whois_user_interaction
 from whois_utils.whois_user_interaction import *
 
 # GlobalSettings
-VERSION = "2.0.1"
+VERSION = "2.0.2"
 MYNAME = sys.argv[0].replace('./', '')
 MYDIR = os.path.abspath(os.path.dirname(__file__))
 FEEDCONFIGDIR = MYDIR
@@ -56,7 +56,7 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
                         help='Disable resuming the download of a partially or completely downloaded file',
                         action='store_true')
     parser.add_argument('--no-premature',
-                        help='Do not download files from daily feedds if the completion indicator is not there. Only effects daily feeds having download_ready_files',
+                        help='Do not download files from daily feeds if the completion indicator is not there. Only effects daily feeds having download_ready_files',
                         action='store_true') 
     parser.add_argument('--interactive',
                         help='\n'.join([
@@ -68,6 +68,9 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
     parser.add_argument('--sslauth',
                 help='Enable ssl authentication instead of the default password authentication.',
                 action='store_true')
+    parser.add_argument('--disable-ssl-verification',
+                        help='Disable ssl verification. Temporary solution, use this if and only if you get "Invalid ssl certificate" erros in spite of having the certificate. This is an issue that occurs e.g. with python 3.8 in case of feeds hosted on bestwhois.org. Will produce ssl warnings.',
+                        action = 'store_true')
     parser.add_argument('--cacertfile',
                         help='\n'.join(['Location of the CA certificate for ssl auth.',
                                         'Defaults to whoisxmlapi.ca next to the script.']),
@@ -206,11 +209,19 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
     # setup login credentials
     for the_feed in feeds:
         if args['sslauth']:
-            the_feed.set_login_credentials(
-                'ssl',
-                cacertfile=args['cacertfile'],
-                keyfile=args['keyfile'],
-                crtfile=args['crtfile'])
+            if args['disable_ssl_verification']:
+                the_feed.set_login_credentials(
+                    'ssl',
+                    cacertfile=False,
+                    keyfile=args['keyfile'],
+                    crtfile=args['crtfile'])
+
+            else:
+                the_feed.set_login_credentials(
+                    'ssl',
+                    cacertfile=args['cacertfile'],
+                    keyfile=args['keyfile'],
+                    crtfile=args['crtfile'])
         else:
             if args['username'] is not None and args['password'] is not None:
                 the_feed.set_login_credentials(

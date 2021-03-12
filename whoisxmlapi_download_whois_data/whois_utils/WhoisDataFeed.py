@@ -1,6 +1,6 @@
 # class to represent data feeds, part of Whois API LLC end user scripts
 #
-# Copyright (c) 2010-2017 Whois API LLC,  http://www.whoisxmlapi.com
+# Copyright (c) 2010-2017 Whois API LLC,  https://www.whoisxmlapi.com
 #
 
 import sys
@@ -201,33 +201,33 @@ class WhoisDataFeed:
         Can be invoked arbitrary times.
         TODO: ssl basenames are hard-wired here"""
         if self.authtype == 'password':
-            self.main_url=self.main_url.replace('https://direct.bestwhois.org','http://bestwhois.org')
-            self.main_url=self.main_url.replace('https://direct.domainwhoisdatabase.com','http://www.domainwhoisdatabase.com')
+            self.main_url=self.main_url.replace('https://direct.bestwhois.org','https://bestwhois.org')
+            self.main_url=self.main_url.replace('https://direct.domainwhoisdatabase.com','https://www.domainwhoisdatabase.com')
             try:
-                self.supported_tlds_url=self.supported_tlds_url.replace('https://direct.bestwhois.org','http://bestwhois.org')
-                self.supported_tlds_url=self.supported_tlds_url.replace('https://direct.domainwhoisdatabase.com','http://www.domainwhoisdatabase.com')
+                self.supported_tlds_url=self.supported_tlds_url.replace('https://direct.bestwhois.org','https://bestwhois.org')
+                self.supported_tlds_url=self.supported_tlds_url.replace('https://direct.domainwhoisdatabase.com','https://www.domainwhoisdatabase.com')
             except:
                 #explicit list is given, supported tlds url is none
                 pass
             #archive supported tlds url if relevant
             try:
-                self.supported_tlds_url_archive=self.supported_tlds_url_archive.replace('https://direct.bestwhois.org','http://bestwhois.org')
-                self.supported_tlds_url_archive=self.supported_tlds_url_archive.replace('https://direct.domainwhoisdatabase.com','http://www.domainwhoisdatabase.com')
+                self.supported_tlds_url_archive=self.supported_tlds_url_archive.replace('https://direct.bestwhois.org','https://bestwhois.org')
+                self.supported_tlds_url_archive=self.supported_tlds_url_archive.replace('https://direct.domainwhoisdatabase.com','https://www.domainwhoisdatabase.com')
             except:
                 #has no supported tlds url archive
                 pass
         elif self.authtype == 'ssl':
-            self.main_url=self.main_url.replace('http://bestwhois.org','https://direct.bestwhois.org')
-            self.main_url=self.main_url.replace('http://www.domainwhoisdatabase.com', 'https://direct.domainwhoisdatabase.com')
+            self.main_url=self.main_url.replace('https://bestwhois.org','https://direct.bestwhois.org')
+            self.main_url=self.main_url.replace('https://www.domainwhoisdatabase.com', 'https://direct.domainwhoisdatabase.com')
             try:
-                self.supported_tlds_url=self.supported_tlds_url.replace('http://bestwhois.org','https://direct.bestwhois.org')
-                self.supported_tlds_url=self.supported_tlds_url.replace('http://www.domainwhoisdatabase.com', 'https://direct.domainwhoisdatabase.com')
+                self.supported_tlds_url=self.supported_tlds_url.replace('https://bestwhois.org','https://direct.bestwhois.org')
+                self.supported_tlds_url=self.supported_tlds_url.replace('https://www.domainwhoisdatabase.com', 'https://direct.domainwhoisdatabase.com')
             except:
                 #explicit list is given, supported tlds url is none
                 pass
             try:
-                self.supported_tlds_url_archive=self.supported_tlds_url_archive.replace('http://bestwhois.org','https://direct.bestwhois.org')
-                self.supported_tlds_url_archive=self.supported_tlds_url_archive.replace('http://www.domainwhoisdatabase.com', 'https://direct.domainwhoisdatabase.com')
+                self.supported_tlds_url_archive=self.supported_tlds_url_archive.replace('https://bestwhois.org','https://direct.bestwhois.org')
+                self.supported_tlds_url_archive=self.supported_tlds_url_archive.replace('https://www.domainwhoisdatabase.com', 'https://direct.domainwhoisdatabase.com')
             except:
                 #explicit list is given, supported tlds url is none
                 pass
