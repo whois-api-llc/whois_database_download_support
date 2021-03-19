@@ -19,7 +19,7 @@ import whois_utils.whois_user_interaction as whois_user_interaction
 from whois_utils.whois_user_interaction import *
 
 # GlobalSettings
-VERSION = "2.0.2"
+VERSION = "2.0.3"
 MYNAME = sys.argv[0].replace('./', '')
 MYDIR = os.path.abspath(os.path.dirname(__file__))
 FEEDCONFIGDIR = MYDIR
@@ -331,11 +331,16 @@ else:
         exit(6)
     feedno = feedoptions.index(answer)
     args['feed'] = feedorder[feedno]
-    answer = g.multchoicebox('Choose the preferred data format(s)',
-                             windowtitle, formatmatrix[args['feed']])
-    if answer is None:
-        exit(6)
-    args['dataformats'] = answer
+    if len(formatmatrix[args['feed']]) > 2:
+        answer = g.multchoicebox('Choose the preferred data format(s)',
+                                 windowtitle, formatmatrix[args['feed']])
+        if answer is None:
+            exit(6)
+        args['dataformats'] = answer
+    else:
+        args['dataformats'] = formatmatrix[args['feed']]
+        g.msgbox("The feed supports a single data format: %s.\nData will be downloaded in this format."%args['dataformats'][0]) 
+
 
     # Start initializing feed
     feeds = []
@@ -410,6 +415,7 @@ else:
                          windowtitle)
     if answer:
         args['sslauth'] = True
+        args['disable_ssl_verification'] = True
     else:
         args['sslauth'] = False
         # Get and verify user acces credentials for the feed
@@ -417,7 +423,7 @@ else:
     defaultusername = ''
     while not the_feed.loginOK:
         if args['sslauth']:
-            the_feed.set_login_credentials('ssl')
+            the_feed.set_login_credentials('ssl', cacertfile=False)
         else:
             answer = g.enterbox('\n'.join([
                 'Enter your username for the chosen WhoisXML API feed.',
@@ -451,7 +457,7 @@ else:
                 exit(1)
     for the_feed in feeds:
         if args['sslauth']:
-            the_feed.set_login_credentials('ssl')
+            the_feed.set_login_credentials('ssl', cacertfile=False)
         else:
             the_feed.set_login_credentials('password',
                                            login=args['username'],

@@ -4,6 +4,11 @@ Whois data download utility
 
 download_whois_data.py
 
+2021-03-19
+----------
+- Fixed an issue in the GUI mode affecting easygui >= 0.98.2
+- Added the temporary workaround of sslauth to GUI mode
+
 2021-03-10
 ----------
 - Recovered the temporary option for sslauth, corrected http to https in urls.
