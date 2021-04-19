@@ -110,14 +110,25 @@ class WhoisDataFeed:
         try:
             self.feed_name = feed_name
             self.data_format = data_format
-            self.main_url=self.feeds_config.get(feed_name + '__' + data_format, 'main_url')
             self.access_test_file=self.feeds_config.get(feed_name + '__' + data_format, 'access_test_file')
             self.download_masks=self.feeds_config.get(feed_name + '__' + data_format, 'download_masks').split(',')
             #Removing temporarily
             #self.sha256path=self.feeds_config.get(feed_name + '__' + data_format, 'sha256_path')
-
         except:
             print_error_and_exit('data feed "%s" does not exist or it does not support the format "%s"\n'
+                % (feed_name, data_format))
+        #URL: oldschool or NAF
+        try:
+            self.main_url = self.feeds_config.get(feed_name + '__' + data_format, 'main_url')
+        except:
+            self.main_url = None
+        try:
+            self.naf_url = self.feeds_config.get(feed_name + '__' + data_format, 'naf_url')
+        except:
+            self.naf_url = None
+            
+        if self.main_url is None and self.naf_url is None:
+            print_error_and_exit('data feed "%s" with "%s" does not have a valid URL\n'
                 % (feed_name, data_format))
         #optional arguments
         try:
@@ -164,6 +175,12 @@ class WhoisDataFeed:
             self.supported_tlds_url = None
         else:
         #How to determine supported tlds
+            #For NAF subscriptions we just try getting the NAF-based url:
+            try:
+                self.naf_supported_tlds_url = self.feeds_config.get(feed_name + '__' + data_format, 'naf_supported_tlds_url')
+            except:
+                self.naf_supported_tlds_url = None
+            #The legacy URL has to be there
             try:
                 #by default we assume that there is an url for supported tlds
                 self.supported_tlds_url = self.feeds_config.get(feed_name + '__' + data_format, 'supported_tlds_url')
@@ -183,8 +200,13 @@ class WhoisDataFeed:
                 self.supported_tlds_url_archive = self.feeds_config.get(feed_name + '__' + data_format, 'supported_tlds_url_archive')
             except:
                 #If the url for archive supported is not provided, we assume that it is not relevant
-
                 self.supported_tlds_url_archive = None
+            try:
+                #by default we assume that there is an url for archive supported tlds
+                self.naf_supported_tlds_url_archive = self.feeds_config.get(feed_name + '__' + data_format, 'naf_supported_tlds_url_archive')
+            except:
+                #If the url for archive supported is not provided, we assume that it is not relevant
+                self.naf_supported_tlds_url_archive = None
         #download_masks_archive: archive feed specific, it is for support of old_data subdirs
         try:
             self.download_masks_archive = self.feeds_config.get(feed_name + '__' + data_format, 'download_masks_archive').split(',')
@@ -231,11 +253,24 @@ class WhoisDataFeed:
             except:
                 #explicit list is given, supported tlds url is none
                 pass
+        elif self.authtype == 'NAF':
+            if self.naf_subscription == '':
+                raise ValueError('Subscription plan not specified')
+            self.main_url = self.naf_url.replace('$plan', self.naf_subscription)
+            if not self.tldindependent and self.supported_tlds_url is not None:
+                    self.supported_tlds_url = self.naf_supported_tlds_url.replace('$plan', self.naf_subscription)
+            #archive supported tlds url if relevant
+            try:
+                self.supported_tlds_url_archive=self.naf_supported_tlds_url_archive.replace('$plan', self.naf_subscription)
+                self.supported_tlds_url_archive=self.naf_supported_tlds_url_archive.replace('$plan', self.naf_subscription)
+            except:
+                #has no supported tlds url archive
+                pass
         else:
             raise ValueError('Invalid auth type: %s' % authtype)
 
         
-    def set_login_credentials(self, authtype, login='', password='', cacertfile = 'whoisxmlapi.ca', keyfile = 'client.key', crtfile = 'client.crt'):
+    def set_login_credentials(self, authtype, login='', password='', naf_subscription = '', cacertfile = 'whoisxmlapi.ca', keyfile = 'client.key', crtfile = 'client.crt'):
         """setup login credentials"""
         if authtype == 'password':
             self.authtype = 'password'
@@ -261,10 +296,31 @@ class WhoisDataFeed:
                     print_error_and_exit('Supposed to read password config ~/.whoisxmlapi_login.ini, but it was not found')
         elif authtype == 'ssl':
             #SSL authentication
-            self.authtype='ssl'
+            self.authtype = 'ssl'
             self.cacertfile = cacertfile
             self.keyfile = keyfile
             self.crtfile = crtfile
+            self.loginOK = False
+        elif authtype == 'NAF':
+            self.authtype = 'NAF'
+            self.naf_subscription = naf_subscription
+            if self.naf_subscription == '':
+                raise ValueError("Subscription type has to be provided for NAF authentication")
+            if password.strip() != '':
+                self.password = password
+            else:
+                print_debug("Reading config for new-generation auth")
+                try:
+                    password_config=ConfigParser.ConfigParser()
+                    password_config.read(os.path.abspath(os.path.join(os.path.expanduser('~/'), '.whoisxmlapi_ng.ini')))            
+                    if self.feed_name != None and self.feed_name in set(set(password_config.sections())):
+                        self.password = password_config.get(self.feed_name, 'password')
+                        self.loginOK = False
+                    else:
+                        self.password = password_config.get('default', 'password')
+                    self.loginOK = False
+                except:
+                    print_error_and_exit('Supposed to read password config ~/.whoisxmlapi_ng.ini, but it was not found')
             self.loginOK = False
         else:
             raise ValueError('Invalid auth type: %s' % authtype)
@@ -278,9 +334,10 @@ class WhoisDataFeed:
         elif self.authtype == "ssl":
             test_session.verify= self.cacertfile
             test_session.cert = (self.crtfile, self.keyfile)
+        elif self.authtype == 'NAF':
+            test_session.auth = (self.password, self.password)
         else:
             raise ValueError("Auth method not specified in feed.")
-    
         accesstest = self.main_url + '/' + self.access_test_file
         if self.is_quarterly:
             if self.dbversion == None:
@@ -313,6 +370,9 @@ class WhoisDataFeed:
         elif self.authtype == 'ssl':
             self.session.verify= self.cacertfile
             self.session.cert = (self.crtfile, self.keyfile)
+            self.sessionopen = True
+        elif self.authtype == 'NAF':
+            self.session.auth = (self.password, self.password)
             self.sessionopen = True
         else:
             raise ValueError("Auth method not specified in feed.")

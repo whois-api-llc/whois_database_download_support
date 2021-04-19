@@ -4,6 +4,11 @@ Whois data download utility
 
 download_whois_data.py
 
+2021-04-19
+----------
+- Added support for new-generation access: subscription plan-dependent
+  URLs, at the moment typically  at newly-registered-domains.whoisxmlapi.com
+
 2021-03-19
 ----------
 - Fixed an issue in the GUI mode affecting easygui >= 0.98.2

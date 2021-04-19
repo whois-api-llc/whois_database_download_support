@@ -4,7 +4,7 @@ Whois data download utility
 
 download_whois_data.py
 
-Release version 1.0.1 dated 2019-12-23.
+Release version 3.0.0 dated 2021-04-19.
 
 Copyright (c) 2010-2017 Whois API, Inc.  http://www.whoisxmlapi.com
 -------------------------------------------------------------------
@@ -37,10 +37,11 @@ Contents
 --------
 1. List of files
 2. Installation
-3. Basic use: GUI operation
-4. Command-line operation, examples
-5. Setting up stored authentication credentials
-6. Some remarks on the operation of the script
+3. Access credentials
+4. Basic use: GUI operation
+5. Command-line operation, examples
+6. Setting up stored authentication credentials
+7. Remarks on the operation of the script
 
 1. List of files
 ----------------
@@ -53,6 +54,8 @@ FAQ.txt			: frequently asked questions
 download_whois_data.py  : the script to run
 install_p12.py		: ssl key and cert installer script, see README.SSL.txt
 feeds.ini		: the configuration file describing the feeds supported by the script.
+			  Not intended to be edited by end-users.
+new_generation_plans.dat: description of the feeds available in new-generation subscription plans.
 			  Not intended to be edited by end-users.
 requirements.txt	: description of package requirements that can be used with pip3 in a
 			  Python virtual environment (Linux, Mac OS X)
@@ -143,8 +146,32 @@ Windows)  for installing  the  required packages.  You  may use  these
 latter  also without  a  virtual environment,  but it  is  not a  good
 practice.
 
+3. Access credentials
+---------------------
 
-3. Basic use: GUI operation
+There are two types of subscriptions:
+
+- Legacy/quarterly access: these users have a separate username and
+  password, or an ssl pack for key-based authentication. The data are
+  typically downloaded from the domainwhoisdatabase.com or
+  bestwhois.org in this case.
+  
+  The script can be used with the username/password pair or the ssl
+  key an cert files.
+
+- New-generation access: these users have the same username and
+  password; this is a string also frequently used as an API key.
+
+  An example of a new-generation URL reads
+
+  https://newly-registered-domains.whoisxmlapi.com/datafeeds/Newly_Registered_Domains/custom2/domain_names_new
+
+  where "custom2" is the subscription plan's name.
+
+  The script can be used with this string and the name of the
+  subscription plan.
+
+4. Basic use: GUI operation
 ----------------------------
 
 The simplest way to use the script is to start it without any argument
@@ -185,6 +212,10 @@ List the supported feeds and data formats:
 
 ./download_whois_data.py --list-feeds
 
+List the feeds available in the subscription plan  "lite" with new-generation access:
+
+./download_whois_data.py --plan lite --list-feeds
+
 List the data formats available for the feed "whois_database":
 
 ./download_whois_data.py --feed whois_database --list-dataformats
@@ -201,7 +232,7 @@ the set of all tlds supported on any of the days:
 
 In the previous example we have specified the username and password in
 the command-line. In the following examples we assume that stored
-credentials have been set up according to Section 5.
+credentials have been set up according to Section 6.
 
 Download mysql  binary dumps (percona)  and simple csv files  for tlds
 "aaa" and "abarth"  from the quarterly release v20  into the directory
@@ -214,27 +245,33 @@ into the directory /tmp (should exist already):
 
 ./download_whois_data.py --verbose --feed whois_database --db-version v20 --dataformat simple_csv --all-tlds --output-dir /tmp
 
-Download full  csv files for  the tld aero from 20170810  to 20170812
+Download full  csv files for  the tld aero from 20210310  to 20210312
 into "download_testdir". Use ssl authentication:
 
-./download_whois_data.py --feed domain_names_whois --startdate 20170810 --enddate 20170812 --dataformats full_csv --tlds aero --sslauth --verbose --output-dir download_testdir
+./download_whois_data.py --feed domain_names_whois --startdate 20210310 --enddate 20210312 --dataformats full_csv --tlds aero --sslauth --verbose --output-dir download_testdir
 
-Download  full csv  data for  all tlds  for 2017-08-11  into "download
-testdir":
+Download full csv files for the tld aero from 20210301 to 20210305,
+with a new-generation account having the "custom2" subscription plan:
+
+./download_whois_data.py --feed domain_names_whois --startdate 20210301 --enddate 20210305 --dataformats full_csv --tlds aero --plan custom2 --password MY_API_KEY --verbose --output-dir download_testdir 
+
+Download  full csv  data for  all tlds  for 2017-08-11  into "download_testdir":
 
 ./download_whois_data.py --feed domain_names_whois --startdate 20170811 --dataformats full_csv_all_tlds  --verbose --output-dir download_testdir
 
-
-4. Setting up stored authentication credentials
+6. Setting up stored authentication credentials
 -----------------------------------------------
 
 Setting up a password config file
 ---------------------------------
 
 The user is prompted for login credentials by default (unless
-ssl-based auth is set up).  It can be avoided by creating a file named
-.whoisxmlapi_login.ini in your home directory. (On Windows systems,
-the right file will be typically
+ssl-based auth is set up).
+
+
+In the case of legacy/quarterly access,  it can be avoided by creating
+a  file  named  .whoisxmlapi_login.ini  in your  home  directory.  (On
+Windows    systems,    the    right    file    will    be    typically
 "C:\Users\YourUsername\.whoisxmlapi_login.ini" .)
 
 It is  recommended to set its  permissions so that the  only logged-in
@@ -252,13 +289,27 @@ password = FEED_SPECIFIC_PASSWORD
 ------------>cut here<----------------
 
 The default section contains the username-password pair to used unless
-you  use  a  feed  with  some  other  password.   Feed-specific  login
-credentials  can be  specified under  sections named  after the  given
-feed, as for  "whois_database" in the example.  (The "default" section
-is mandatory, the others are optional.)
+you use a feed with some other password.  Feed-specific login
+credentials can be specified under sections named after the given
+feed, as for "whois_database" in the example.  (The "default" section
+is mandatory, the others are optional.)  If this file is set-up, you
+will not have to specify login and passwords in the dialogs or in the
+command-line in the case of the legacy access.
 
-If  this file  is  set-up, you  will  not have  to  specify login  and
-passwords in the dialogs or in the command-line.
+Similarly, in the case of new-generation access, a file named
+".whoisxmlapi_ng.ini" can be set up, with the following contents:
+
+------------>cut here<----------------
+[default]
+plan = custom2
+password = YOUR_API_KEY
+------------>cut here<----------------
+
+(Replace "custom2"  with your subscription plan,  and "YOUR_API_KEY".)
+The file has  the same role as .whoisxmlapi_login.ini,  except that it
+does not affect the interactive mode. In interactive mode this file is
+ignored.)
+
 
 Setting ssl authentication
 --------------------------
@@ -270,8 +321,8 @@ file. When running with  a GUI, if sslauth is set  up, the script will
 ask in a  dialog window whether you  want to use this  or use password
 auth, e.g. for feeds which you do not have ssl-based access.
 
-6. Some remarks on the operation of the script
-----------------------------------------------
+7. Remarks on the operation of the script
+-----------------------------------------
 
 The script generates a list of files to be downloaded according to the
 provided information.  It  does not check in  detail, however, whether
@@ -312,6 +363,9 @@ attempt  is made  to continue  a broken  download, the  files will  be
 redownloaded from  scratch if necessary.  If there is no  md5 checksum
 for the file, the file is downloaded but reported as unverified in the
 script output.
+
+In case of the new-generation access, continuation of downloading is
+not yet supported, --no-resume is the default.
 
 When  completed, the  script  will  report the  files  which were  not
 available  for download.  Note that  this maybe  normal, e.g.  in some

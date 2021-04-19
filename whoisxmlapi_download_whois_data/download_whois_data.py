@@ -19,7 +19,7 @@ import whois_utils.whois_user_interaction as whois_user_interaction
 from whois_utils.whois_user_interaction import *
 
 # GlobalSettings
-VERSION = "2.0.3"
+VERSION = "3.0.0"
 MYNAME = sys.argv[0].replace('./', '')
 MYDIR = os.path.abspath(os.path.dirname(__file__))
 FEEDCONFIGDIR = MYDIR
@@ -28,6 +28,18 @@ FEEDCONFIGDIR = MYDIR
 # Probably the directory with "feeds.ini" should be given more precisely.
 formatmatrix = wdf.feed_format_matrix(FEEDCONFIGDIR)
 feed_descriptions = wdf.feed_descriptions(FEEDCONFIGDIR)
+
+#We need the plans to feeds mapping
+try:
+    plans_feeds_matrix = {}
+    plansfile = open(os.path.dirname(os.path.abspath(__file__))+\
+                     "/new_generation_plans.dat",'rt')
+    for line in plansfile.readlines():
+        [m_plan, m_feeds] = line.strip().split(':')
+        plans_feeds_matrix[m_plan] = m_feeds.split(",")
+    plansfile.close()
+except:
+    print_error_and_exit('Problem with new_genration_plans.dat.')
 
 if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
     DIALOG_COMMUNICATION = False
@@ -63,11 +75,14 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
                             'Interactive mode.',
                             'If proivded as a first argument, ',
                             'you will be prompted for the parameters in GUI dialogue windows.']))
-    parser.add_argument('--username', help='Username for the feed.')
-    parser.add_argument('--password', help='Password for the feed.')
+    parser.add_argument('--username', help='Username.')
+    parser.add_argument('--password', help='Password (legacy/quarterly) or key (new-generation).')
     parser.add_argument('--sslauth',
                 help='Enable ssl authentication instead of the default password authentication.',
                 action='store_true')
+    parser.add_argument('--plan',
+                        type=str,
+                        help='Subscription plan for new-generation access. The --password should be the key for the access. Implies --no-resume.')
     parser.add_argument('--disable-ssl-verification',
                         help='Disable ssl verification. Temporary solution, use this if and only if you get "Invalid ssl certificate" erros in spite of having the certificate. This is an issue that occurs e.g. with python 3.8 in case of feeds hosted on bestwhois.org. Will produce ssl warnings.',
                         action = 'store_true')
@@ -127,16 +142,22 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
             "Feed configuration invalid, probably missing feeds.ini file.\nPlease place the feeds.ini file supplied with the program next to the program.")
     # The user wants to list feeds
     if args['list_feeds']:
-        sys.stderr.write("\nSupported feeds and data formats: ")
-        sys.stderr.write("\n")
-        for feed in formatmatrix.keys():
-            sys.stderr.write("- Feed: %.60s \n" % feed)
-            sys.stderr.write("  Description: %s \n"% feed_descriptions[feed])
-            sys.stderr.write("  Formats: ")
+        sys.stdout.write("\n")
+        if args['plan'] is not None:
+            availablefeeds = plans_feeds_matrix[args['plan']]
+            sys.stdout.write("\nSupported feeds and data formats in plan %s:"%args['plan'])
+        else:
+            sys.stdout.write("\nSupported feeds and data formats:")
+            availablefeeds = formatmatrix.keys()
+        sys.stdout.write('\n\n')
+        for feed in availablefeeds:
+            sys.stdout.write("- Feed: %.60s \n" % feed)
+            sys.stdout.write("  Description: %s \n"% feed_descriptions[feed])
+            sys.stdout.write("  Formats: ")
             for f in formatmatrix[feed]:
-                sys.stderr.write("%s " % f)
-            sys.stderr.write("\n")
-        sys.stderr.write("\n\n")
+                sys.stdout.write("%s " % f)
+            sys.stdout.write("\n")
+        sys.stdout.write("\n\n")
         exit(6)
     # Check if feed is specified and valid
     if args['feed'] is None:
@@ -147,12 +168,16 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
         print_error_and_exit(
             'Invalid feed.'
             'See --list_feeds for the list of supported feeds and their data formats.')
+    #If new-generation authentication is used, the plan should be compatible with the feed
+    if args['plan'] is not None:
+        if args['feed'] not in set(plans_feeds_matrix[args['plan']]):
+            print_error_and_exit("Feed %s unavailable in plan %s."%(args['feed'], args['plan']))
     # The user wants data formats for this feed
     if args['list_dataformats']:
-        sys.stderr.write("Data formats for feed %s: " % args['feed'])
+        sys.stdout.write("Data formats for feed %s: " % args['feed'])
         for f in formatmatrix[args['feed']]:
-            sys.stderr.write("%s " % f)
-        sys.stderr.write("\n")
+            sys.stdout.write("%s " % f)
+        sys.stdout.write("\n")
         exit(6)
     if args['describe_feed']:
         sys.stderr.write("- Feed: %.60s \n" % args['feed'])
@@ -170,6 +195,10 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
     for f in args['dataformats']:
         if f not in set(formatmatrix[args['feed']]):
             print_error_and_exit('Feed %s does not support the data format %s.' % (args['feed'], f))
+    # When using NAF, disable resume download
+    if args['plan'] is not None:
+        print_debug("No resume for new-generation access.")
+        args['no_resume'] = True
     # Create feeds
     feeds=[]
     for dataformat in args['dataformats']:
@@ -222,14 +251,21 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
                     cacertfile=args['cacertfile'],
                     keyfile=args['keyfile'],
                     crtfile=args['crtfile'])
-        else:
-            if args['username'] is not None and args['password'] is not None:
+        elif args['username'] is not None and args['password'] is not None \
+             and args['plan'] is None:
                 the_feed.set_login_credentials(
                     'password',
-                    login=args['username'],
-                    password=args['password'])
-            else:
-                the_feed.set_login_credentials('password')
+                    login = args['username'],
+                    password = args['password'])
+        elif args['plan'] is not None:
+            if args['password'] is None:
+                args['password'] = ''
+            the_feed.set_login_credentials(
+                'NAF',
+                naf_subscription=args['plan'],
+                password=args['password'])
+        else:
+            the_feed.set_login_credentials('password')
     the_feed.test_http_access()
     if not the_feed.loginOK:
         print_error_and_exit(
@@ -305,7 +341,7 @@ else:
     args['keyfile'] = MYDIR + '/client.key'
     args['verbose'] = True
     args['debug'] = False
-    args['no_resume'] = False
+    args['no_resume'] = True
     # Default window title
     windowtitle = 'WhoisXML API MySQL data downloader script'
 
@@ -317,7 +353,19 @@ else:
         windowtitle)
     if answer is None:
         exit(6)
-    feeds = formatmatrix.keys()
+
+    plans = ['Legacy/quarterly'] + list(plans_feeds_matrix.keys())
+    answer = g.choicebox('Choose your subscripton plan. \n Choose "Legacy/quarterly" if your username and password differ',
+                              windowtitle,
+                              plans)
+    if answer is None:
+        exit(6)
+    if answer != 'Legacy/quarterly':
+        args['plan'] = answer
+        nafmode = True
+        feeds = plans_feeds_matrix[answer]
+    else:
+        feeds = formatmatrix.keys()
     # a not very elegant solution to overcome limitations of easygui
     feedoptions = []
     feedorder = []
@@ -346,6 +394,7 @@ else:
     feeds = []
     for dataformat in args['dataformats']:
         the_feed = wdf.WhoisDataFeed()
+        the_feed.set_no_resume(args['no_resume'])
         the_feed.set_feed_type(FEEDCONFIGDIR, args['feed'], dataformat)
         feeds.append(the_feed)
     # If a quarterly feed is chosen, we must get the dbversion
@@ -407,7 +456,7 @@ else:
     if (
         os.path.isfile(args['keyfile']) and
         os.path.isfile(args['crtfile']) and
-        os.path.isfile(args['cacertfile'])
+        os.path.isfile(args['cacertfile'] and not nafmode)
     ):
         answer = g.ynbox('\n'.join(['SSL auth config detected.',
                                     'Do you want to use ssl auth?',
@@ -425,25 +474,39 @@ else:
         if args['sslauth']:
             the_feed.set_login_credentials('ssl', cacertfile=False)
         else:
-            answer = g.enterbox('\n'.join([
-                'Enter your username for the chosen WhoisXML API feed.',
-                'Leave it empty if you have configured ~/.whoisxmlapi_login.ini']),
-                windowtitle, default=defaultusername)
-            if answer is None:
-                exit(6)
-            args['username'] = answer
-            defaultusername = answer
-            if answer.strip() != '':
+            if not nafmode:
+                answer = g.enterbox('\n'.join([
+                    'Enter your username for the chosen WhoisXML API feed.',
+                    'Leave it empty if you have configured ~/.whoisxmlapi_login.ini']),
+                    windowtitle, default=defaultusername)
+                if answer is None:
+                    exit(6)
+                args['username'] = answer
+                defaultusername = answer
+            else:
+                answer = ''
+            if not nafmode and answer.strip() != '':
                 answer = g.passwordbox('Enter your password for the user %s' % (args['username'],),
+                                       windowtitle)
+                if answer is None:
+                    exit(6)
+            elif nafmode:
+                answer = g.passwordbox('Enter your API key serving as your username and password',
                                        windowtitle)
                 if answer is None:
                     exit(6)
             # If the username is an empty string, the password will be also one.
             args['password'] = answer
-            the_feed.set_login_credentials(
-                'password',
-                login=args['username'],
-                password=args['password'])
+            if nafmode:
+                the_feed.set_login_credentials(
+                    'NAF',
+                    naf_subscription=args['plan'],
+                    password=args['password'])
+            else:
+                the_feed.set_login_credentials(
+                    'password',
+                    login=args['username'],
+                    password=args['password'])
         the_feed.test_http_access()
         if not the_feed.loginOK:
             answer = g.ynbox('\n'.join([
@@ -458,6 +521,11 @@ else:
     for the_feed in feeds:
         if args['sslauth']:
             the_feed.set_login_credentials('ssl', cacertfile=False)
+        elif nafmode:
+            the_feed.set_login_credentials(
+                    'NAF',
+                    naf_subscription=args['plan'],
+                    password=args['password'])
         else:
             the_feed.set_login_credentials('password',
                                            login=args['username'],
