@@ -19,7 +19,7 @@ import whois_utils.whois_user_interaction as whois_user_interaction
 from whois_utils.whois_user_interaction import *
 
 # GlobalSettings
-VERSION = "3.0.0"
+VERSION = "3.0.1"
 MYNAME = sys.argv[0].replace('./', '')
 MYDIR = os.path.abspath(os.path.dirname(__file__))
 FEEDCONFIGDIR = MYDIR
@@ -366,6 +366,7 @@ else:
         feeds = plans_feeds_matrix[answer]
     else:
         feeds = formatmatrix.keys()
+        nafmode = False
     # a not very elegant solution to overcome limitations of easygui
     feedoptions = []
     feedorder = []

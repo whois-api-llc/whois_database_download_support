@@ -4,6 +4,10 @@ Whois data download utility
 
 download_whois_data.py
 
+2021-06-01
+----------
+- A minor bug fixed in interactive mode.
+
 2021-04-19
 ----------
 - Added support for new-generation access: subscription plan-dependent
