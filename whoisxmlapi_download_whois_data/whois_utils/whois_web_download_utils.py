@@ -1,6 +1,6 @@
 # Web download module of Whois API LLC end user scripts
 #
-# Copyright (c) 2010-2017 Whois API LLC,  http://www.whoisxmlapi.com
+# Copyright (c) 2010-2021 Whois API LLC,  http://www.whoisxmlapi.com
 #
 
 from __future__ import print_function

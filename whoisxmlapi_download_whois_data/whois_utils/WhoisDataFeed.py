@@ -1,6 +1,6 @@
 # class to represent data feeds, part of Whois API LLC end user scripts
 #
-# Copyright (c) 2010-2017 Whois API LLC,  https://www.whoisxmlapi.com
+# Copyright (c) 2010-2021 Whois API LLC,  https://www.whoisxmlapi.com
 #
 
 import sys

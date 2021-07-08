@@ -3,7 +3,7 @@
 # Script to download data from WhoisXML API subscriptions
 # Provided for subscribers of quarterly whois data feeds
 #
-# Copyright (c) 2010-2019 Whois API, Inc,  http://www.whoisxmlapi.com
+# Copyright (c) 2010-2021 Whois API, Inc,  http://www.whoisxmlapi.com
 #
 
 import sys

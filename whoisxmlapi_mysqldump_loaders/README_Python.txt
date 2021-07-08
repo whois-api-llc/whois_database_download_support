@@ -6,7 +6,7 @@ load_mysql_data.py
 
 Document version 1.0 dated 2017-07-27
 
-Copyright (c) 2010-2017 Whois API LLC,  http://www.whoisxmlapi.com
+Copyright (c) 2010-2021 Whois API LLC,  http://www.whoisxmlapi.com
 
 The script is  provided for our subscribers to load  ASCII MySQL dumps
 obtained from our quarterly feeds into MySQL RDBMS in order to create a

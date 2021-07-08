@@ -6,7 +6,7 @@ download_whois_data.py
 
 Release version 3.0.0 dated 2021-04-19.
 
-Copyright (c) 2010-2017 Whois API, Inc.  http://www.whoisxmlapi.com
+Copyright (c) 2010-2021 Whois API, Inc.  http://www.whoisxmlapi.com
 -------------------------------------------------------------------
 
 The script is provided for our subscribers to download data from their

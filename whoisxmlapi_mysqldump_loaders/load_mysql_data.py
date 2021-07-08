@@ -3,7 +3,7 @@
 #Script to load ASCII mysql dumps for a tld
 #Provided for subscribers of quarterly whois data feeds
 #
-#Copyright (c) 2010-2017 Whois API LLC,  http://www.whoisxmlapi.com
+#Copyright (c) 2010-2021 Whois API LLC,  http://www.whoisxmlapi.com
 #
 
 import sys

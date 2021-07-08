@@ -2,7 +2,7 @@
 #
 #Sample script to load binary mysql dumps for a tld
 #
-#Copyright (c) 2010-2017 Whois API LLC,  http://www.whoisxmlapi.com
+#Copyright (c) 2010-2021 Whois API LLC,  http://www.whoisxmlapi.com
 #
 #Note: IF YOU ARE READING THIS SCRIPT JUST TO COLLECT IDEAS FOR YOUR OWN LOADER,
 #      VISIT THE END OF THE FILE WHERE THE REAL WORK IS DONE

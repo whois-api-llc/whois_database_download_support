@@ -2,7 +2,7 @@ FAQ.txt for
 
 download_whois_data.py
 
-Copyright (c) 2010-2018 Whois API LLC,  http://www.whoisxmlapi.com
+Copyright (c) 2010-2021 Whois API LLC,  http://www.whoisxmlapi.com
 -------------------------------------------------------------------
 
 Q1: I  obtained an  error  stating that  my login  and password  are

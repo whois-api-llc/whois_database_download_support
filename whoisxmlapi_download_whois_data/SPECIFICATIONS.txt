@@ -2,7 +2,7 @@ SPECIFICATIONS.txt for
 
 download_whois_data.py
 
-Copyright (c) 2010-2018 Whois API LLC,  http://www.whoisxmlapi.com
+Copyright (c) 2010-2021 Whois API LLC,  http://www.whoisxmlapi.com
 -------------------------------------------------------------------
 
 This document is intended for developers and advanced users.

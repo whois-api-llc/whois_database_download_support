@@ -3,7 +3,7 @@
 #Sample script to load ASCII mysql dumps for a tld
 #This loads schema+data from a single backup file
 #Recommended for smaller tlds.
-#Copyright (c) 2010-2017 Whois API LLC,  http://www.whoisxmlapi.com
+#Copyright (c) 2010-2021 Whois API LLC,  http://www.whoisxmlapi.com
 #
 #Note: IF YOU ARE READING THIS SCRIPT JUST TO COLLECT IDEAS FOR YOUR OWN LOADER,
 #      VISIT THE END OF THE FILE WHERE THE REAL WORK IS DONE

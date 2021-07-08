@@ -3,7 +3,7 @@ MySQL binary dump loader scripts
 
 Document version 1.0 dated 2017-07-24
 
-Copyright (c) 2010-2017 Whois API LLC,  http://www.whoisxmlapi.com
+Copyright (c) 2010-2021 Whois API LLC,  http://www.whoisxmlapi.com
 
 The scripts are provided for our subscribers to load binary mysql dumps
 obtained from our  quarterly feeds into MySQL  databases.  The scripts
