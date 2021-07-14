@@ -4,6 +4,12 @@ Whois data download utility
 
 download_whois_data.py
 
+2021-07-14
+----------
+- The broken --maxtries option has been fixed, the default value has
+  been changed from 5 to 1 for performance reasons
+- Fixed a bug in the removal of empty supported tld
+
 2021-06-01
 ----------
 - A minor bug fixed in interactive mode.

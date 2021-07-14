@@ -77,7 +77,7 @@ class WhoisDataFeed:
         self.loginOK = False
         self.feed_name = None
         self.data_format = None
-        self.maxtries = 5
+        self.maxtries = 1
         self.no_resume = False
         self.authtype = 'password'
         self.download_premature = True
@@ -447,16 +447,17 @@ class WhoisDataFeed:
                 url = self.supported_tlds_url.replace('$_date', '').replace('/$year','').replace('/$month','')
                 self.supported_tlds = self.get_url_contents(url).strip().split(',')
                 self.supported_tlds = list(set(self.supported_tlds))
-            try:
-                self.supported_tlds.remove('')
-            except:
-                pass
             if self.supported_tlds == None or self.supported_tlds == []:
                 print_error_and_exit('No tlds found.\n In case of some daily feeds it can be normal:\n it just means that there are no data available for the given day(s).')
             self.supported_tlds = sorted(list(set(self.supported_tlds)))
         else:
             """other feed types: not yet supported"""
             pass
+        try:
+            self.supported_tlds.remove('')
+        except:
+            pass
+
 
     def check_download_ready_on_day(self, the_date, targetdir):
         """Checks if the download_ready file is generated for the given daily feed on the given date"""
@@ -470,7 +471,6 @@ class WhoisDataFeed:
         mask = self.substitute_mask(self.download_ready_file,
                                     '', '',the_date, '')
         url = self.main_url + '/' + self.statuspath + '/' + mask
-        print(url)
         dlready = whois_web_download_utils.web_download_file(url, self.session, targetdir, self.maxtries, True)
         return dlready
 

@@ -19,7 +19,7 @@ import whois_utils.whois_user_interaction as whois_user_interaction
 from whois_utils.whois_user_interaction import *
 
 # GlobalSettings
-VERSION = "3.0.1"
+VERSION = "3.0.2"
 MYNAME = sys.argv[0].replace('./', '')
 MYDIR = os.path.abspath(os.path.dirname(__file__))
 FEEDCONFIGDIR = MYDIR
@@ -62,8 +62,8 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
                                         'only errors are reported.']),
                         action='store_true')
     parser.add_argument('-d', '--debug', help='Debug mode, even more messages', action='store_true')
-    parser.add_argument('--maxtries',
-                        help='Maximum number of tries when downloading. Defaults to 5.')
+    parser.add_argument('--maxtries', type=int,
+                        help='Maximum number of tries when downloading. Defaults to 1.')
     parser.add_argument('--no-resume',
                         help='Disable resuming the download of a partially or completely downloaded file',
                         action='store_true')
