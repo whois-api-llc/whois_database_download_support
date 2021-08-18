@@ -77,10 +77,11 @@ class WhoisDataFeed:
         self.loginOK = False
         self.feed_name = None
         self.data_format = None
-        self.maxtries = 1
+        self.maxtries = 3
         self.no_resume = False
         self.authtype = 'password'
         self.download_premature = True
+        self.use_alt_tlds = False
         
     def set_maxtries(self, maxtries):
         """Set the maximum number of download attempts"""
@@ -94,6 +95,10 @@ class WhoisDataFeed:
         """Force downloading premature files"""
         self.download_premature = download_premature
         
+    def set_use_alt_tlds(self, use_alt_tlds):
+        """Use added/dropped tlds files instead of supported"""
+        self.use_alt_tlds = use_alt_tlds
+
     def set_feed_type(self, config_dir, feed_name, data_format):
         """Basic config of this feed.
         Sets up its basic data from the file feeds.ini.
@@ -193,7 +198,15 @@ class WhoisDataFeed:
                 except:
                     print_error_and_exit('Config error: cannot determine supported TLDS url config in feed "%s" , format "%s"\n'
                     % (feed_name, data_format))
-                    exit(1)        
+                    exit(1)
+            #Alternative (add/dropped) URL for legacy feeds)
+            try:
+                #by default we assume that there is an url for added/dropped tlds
+                self.alt_tlds_url = self.feeds_config.get(feed_name + '__' + data_format, 'alt_tlds_url')
+            except:
+                #If the alternative url was not specified, this feed does not have one.
+                self.alt_tlds_url = None
+                
             #Determining supported tlds for those archive feeds which have year-named subdirectories
             try:
                 #by default we assume that there is an url for archive supported tlds
@@ -207,6 +220,33 @@ class WhoisDataFeed:
             except:
                 #If the url for archive supported is not provided, we assume that it is not relevant
                 self.naf_supported_tlds_url_archive = None
+
+            # alternative tlds URL, aka added or dropped            
+            #For NAF subscriptions we just try getting the NAF-based url:
+            try:
+                self.naf_alt_tlds_url = self.feeds_config.get(feed_name + '__' + data_format, 'naf_alt_tlds_url')
+            except:
+                self.naf_alt_tlds_url = None
+            #The legacy URL has to be there
+            try:
+                #by default we assume that there is an url for supported tlds
+                self.at_tlds_url = self.feeds_config.get(feed_name + '__' + data_format, 'alt_tlds_url')
+            except:
+                #If the url was not specified, supported tlds should be listed in the config
+                self.alt_tlds_url = None
+            #Determining alternative tlds for those archive feeds which have year-named subdirectories
+            try:
+                #by default we assume that there is an url for archive supported tlds
+                self.alt_tlds_url_archive = self.feeds_config.get(feed_name + '__' + data_format, 'alt_tlds_url_archive')
+            except:
+                #If the url for archive supported is not provided, we assume that it is not relevant
+                self.alt_tlds_url_archive = None
+            try:
+                #by default we assume that there is an url for archive supported tlds
+                self.naf_alt_tlds_url_archive = self.feeds_config.get(feed_name + '__' + data_format, 'naf_alt_tlds_url_archive')
+            except:
+                #If the url for archive supported is not provided, we assume that it is not relevant
+                self.naf_alt_tlds_url_archive = None
         #download_masks_archive: archive feed specific, it is for support of old_data subdirs
         try:
             self.download_masks_archive = self.feeds_config.get(feed_name + '__' + data_format, 'download_masks_archive').split(',')
@@ -231,10 +271,24 @@ class WhoisDataFeed:
             except:
                 #explicit list is given, supported tlds url is none
                 pass
+            #Alternative tlds url
+            try:
+                self.alt_tlds_url=self.alt_tlds_url.replace('https://direct.bestwhois.org','https://bestwhois.org')
+                self.alt_tlds_url=self.alt_tlds_url.replace('https://direct.domainwhoisdatabase.com','https://www.domainwhoisdatabase.com')
+            except:
+            #no alt_tlds url
+                pass
             #archive supported tlds url if relevant
             try:
                 self.supported_tlds_url_archive=self.supported_tlds_url_archive.replace('https://direct.bestwhois.org','https://bestwhois.org')
                 self.supported_tlds_url_archive=self.supported_tlds_url_archive.replace('https://direct.domainwhoisdatabase.com','https://www.domainwhoisdatabase.com')
+            except:
+                #has no supported tlds url archive
+                pass
+            #Alternative tlds archive URL if relevant
+            try:
+                self.alt_tlds_url_archive=self.alt_tlds_url_archive.replace('https://direct.bestwhois.org','https://bestwhois.org')
+                self.alt_tlds_url_archive=self.alt_tlds_url_archive.replace('https://direct.domainwhoisdatabase.com','https://www.domainwhoisdatabase.com')
             except:
                 #has no supported tlds url archive
                 pass
@@ -247,9 +301,24 @@ class WhoisDataFeed:
             except:
                 #explicit list is given, supported tlds url is none
                 pass
+            #alternative tlds url
+            try:
+                self.alt_tlds_url=self.alt_tlds_url.replace('https://bestwhois.org','https://direct.bestwhois.org')
+                self.alt_tlds_url=self.alt_tlds_url.replace('https://www.domainwhoisdatabase.com', 'https://direct.domainwhoisdatabase.com')
+            except:
+                #explicit list is given, supported tlds url is none
+                pass
+            #archive supported TLDs url
             try:
                 self.supported_tlds_url_archive=self.supported_tlds_url_archive.replace('https://bestwhois.org','https://direct.bestwhois.org')
                 self.supported_tlds_url_archive=self.supported_tlds_url_archive.replace('https://www.domainwhoisdatabase.com', 'https://direct.domainwhoisdatabase.com')
+            except:
+                #explicit list is given, supported tlds url is none
+                pass
+            #archive alternative TLDs url
+            try:
+                self.alt_tlds_url_archive=self.alt_tlds_url_archive.replace('https://bestwhois.org','https://direct.bestwhois.org')
+                self.alt_tlds_url_archive=self.alt_tlds_url_archive.replace('https://www.domainwhoisdatabase.com', 'https://direct.domainwhoisdatabase.com')
             except:
                 #explicit list is given, supported tlds url is none
                 pass
@@ -259,10 +328,17 @@ class WhoisDataFeed:
             self.main_url = self.naf_url.replace('$plan', self.naf_subscription)
             if not self.tldindependent and self.supported_tlds_url is not None:
                     self.supported_tlds_url = self.naf_supported_tlds_url.replace('$plan', self.naf_subscription)
+                    if self.alt_tlds_url is not None:
+                        self.alt_tlds_url = self.naf_alt_tlds_url.replace('$plan', self.naf_subscription)
             #archive supported tlds url if relevant
             try:
                 self.supported_tlds_url_archive=self.naf_supported_tlds_url_archive.replace('$plan', self.naf_subscription)
-                self.supported_tlds_url_archive=self.naf_supported_tlds_url_archive.replace('$plan', self.naf_subscription)
+            except:
+                #has no supported tlds url archive
+                pass
+            #alternative archive tlds url
+            try:
+                self.alt_tlds_url_archive=self.naf_alt_tlds_url_archive.replace('$plan', self.naf_subscription)
             except:
                 #has no supported tlds url archive
                 pass
@@ -421,9 +497,9 @@ class WhoisDataFeed:
             url = self.supported_tlds_url.replace('$dbversion', self.dbversion)
             tlds = self.get_url_contents(url).strip().split(',')
             self.supported_tlds = [tld.strip() for tld in tlds]
-        elif self.is_daily and self.supported_tlds_url != None:
+        elif self.is_daily and self.supported_tlds_url != None and not self.use_alt_tlds:
             """daily feeds: listing available for dates"""
-            """except when we were given the tlds explicityl"""
+            """except when we were given the tlds explicitly"""
             ndays = (self.enddate - self.startdate).days + 1
             self.supported_tlds = []
             for day in range(ndays):
@@ -445,6 +521,38 @@ class WhoisDataFeed:
             if self.supported_tlds == None or self.supported_tlds == []:
                 print_verbose('No specific list of tlds found for the dates. Downloading generic list.')
                 url = self.supported_tlds_url.replace('$_date', '').replace('/$year','').replace('/$month','')
+                self.supported_tlds = self.get_url_contents(url).strip().split(',')
+                self.supported_tlds = list(set(self.supported_tlds))
+            if self.supported_tlds == None or self.supported_tlds == []:
+                print_error_and_exit('No tlds found.\n In case of some daily feeds it can be normal:\n it just means that there are no data available for the given day(s).')
+            self.supported_tlds = sorted(list(set(self.supported_tlds)))
+        elif self.is_daily and self.use_alt_tlds:
+            """daily feeds: alternative (add/drop) listing available for dates 
+            and prescribed for use"""
+            ndays = (self.enddate - self.startdate).days + 1
+            self.supported_tlds = []
+            for day in range(ndays):
+                sptldsdate = self.startdate + datetime.timedelta(days=day)
+                datestr = sptldsdate.strftime('_%Y_%m_%d')
+                print_verbose('Getting list of supported tlds on day %d (%s) of %d days.' %(day+1, datestr, ndays))
+                thisdaysyear = sptldsdate.year
+                try:
+                    url = self.alt_tlds_url.replace('$_date', datestr).replace('$year',sptldsdate.strftime('%Y')).replace('$month',sptldsdate.strftime('%m'))
+                except:
+                    print_error_and_exit("The data feed %s does not support the --only-changed option."%self.feed_name)
+                if self.alt_tlds_url_archive != None and thisdaysyear != datetime.date.today().year:
+                    url = self.alt_tlds_url_archive.replace('$_date', datestr).replace('$year',sptldsdate.strftime('%Y')).replace('$month',sptldsdate.strftime('%m'))
+                print_debug("TLD url: %s" % url)
+                supptlds_forday = self.get_url_contents(url).strip().split(',')
+                print_debug("Downloaded info: %s" % str(supptlds_forday))
+                if supptlds_forday == ['']:
+                    print_verbose('No specific list of tlds for day %d (%s) of %d days.' %(day+1, datestr, ndays))
+                else:
+                    self.supported_tlds += supptlds_forday 
+            #If there is no supported_tlds for any day, we get the default one without any date
+            if self.supported_tlds == None or self.supported_tlds == []:
+                print_verbose('No specific list of tlds found for the dates. Downloading generic list.')
+                url = self.alt_tlds_url.replace('$_date', '').replace('/$year','').replace('/$month','')
                 self.supported_tlds = self.get_url_contents(url).strip().split(',')
                 self.supported_tlds = list(set(self.supported_tlds))
             if self.supported_tlds == None or self.supported_tlds == []:

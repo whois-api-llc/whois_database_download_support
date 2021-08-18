@@ -4,6 +4,14 @@ Whois data download utility
 
 download_whois_data.py
 
+2021-08-18
+----------
+
+- Added the option --only-changed to use added/dropped tlds files
+  instead of supported_tlds. Works only for feeds where these files
+  are available.
+- Changed the default value of --maxtries to 3 upon users' request
+
 2021-07-14
 ----------
 - The broken --maxtries option has been fixed, the default value has

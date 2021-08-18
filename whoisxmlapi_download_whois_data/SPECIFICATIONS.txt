@@ -114,11 +114,16 @@ termination with an error.
 
 The list of available tlds for  each feed is determined by downloading
 the files specifying  the actual list of supported  tlds (specified in
-the "supported_tlds_url" in feeds.ini). If  the list of supported tlds
-is date  dependent, the supported  tlds list  is considered to  be the
-superset of  all of  these. The  tlds for which  the download  will be
-carried  out  will be  the  intersection  of  this  set with  the  set
-specified by the user.
+the "supported_tlds_url" in feeds.ini). In  case of daily feeds, it is
+also possible  to determine the  list based on  the list of  TLDs that
+contain changes on the given day. The --only-changed option results in
+this behavior.  In this case,  the list  in the "alt_tlds_url"  of the
+feeds.ini  file  will  be  used.  When trying  to  download  with  the
+--only-changed  option   from  a  feed  that   has  no  "alt_tlds_url"
+specified, an error will occur. If  the list of supported tlds is date
+dependent, the supported tlds list is considered to be the superset of
+all of these. The tlds for which the download will be carried out will
+be the intersection of this set with the set specified by the user.
 
 By  the end  of this  phase  the list  of  files to  be downloaded  is
 determined.

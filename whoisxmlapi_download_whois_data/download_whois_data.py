@@ -19,7 +19,7 @@ import whois_utils.whois_user_interaction as whois_user_interaction
 from whois_utils.whois_user_interaction import *
 
 # GlobalSettings
-VERSION = "3.0.2"
+VERSION = "4.0.0"
 MYNAME = sys.argv[0].replace('./', '')
 MYDIR = os.path.abspath(os.path.dirname(__file__))
 FEEDCONFIGDIR = MYDIR
@@ -63,13 +63,16 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
                         action='store_true')
     parser.add_argument('-d', '--debug', help='Debug mode, even more messages', action='store_true')
     parser.add_argument('--maxtries', type=int,
-                        help='Maximum number of tries when downloading. Defaults to 1.')
+                        help='Maximum number of tries when downloading. Defaults to 3.')
     parser.add_argument('--no-resume',
                         help='Disable resuming the download of a partially or completely downloaded file',
                         action='store_true')
     parser.add_argument('--no-premature',
                         help='Do not download files from daily feeds if the completion indicator is not there. Only effects daily feeds having download_ready_files',
-                        action='store_true') 
+                        action='store_true')
+    parser.add_argument('--only-changed',
+                        help='Use the added/dropped tlds lists instead of supported tlds to avoid checking all supported TLDs.',
+                        action='store_true')
     parser.add_argument('--interactive',
                         help='\n'.join([
                             'Interactive mode.',
@@ -286,6 +289,7 @@ if len(sys.argv) > 1 and sys.argv[-1].strip() != '--interactive':
     if not dontneedtlds:
         for the_feed in feeds:
             if not the_feed.tldindependent:
+                the_feed.set_use_alt_tlds(args["only_changed"])
                 the_feed.update_supported_tlds()
                 available_tlds.append(set(the_feed.supported_tlds))
         available_tlds = sorted(list(frozenset().union(*available_tlds)))
@@ -326,6 +330,7 @@ else:
     args = {}
     DIALOG_COMMUNICATION = True
     args['no_premature'] = False
+    args['only_changed'] = False
     #With dialogs we are always verbose but never debug
     whois_user_interaction.VERBOSE = True
     whois_user_interaction.DEBUG = False
@@ -539,6 +544,7 @@ else:
     #note: the user may mix tld dependent and independent feeds
     for the_feed in feeds:
         the_feed.open_http_session()
+        the_feed.set_use_alt_tlds(args["only_changed"])
         the_feed.update_supported_tlds()
         dontneedtlds = dontneedtlds and the_feed.tldindependent
     if dontneedtlds:

@@ -4,7 +4,7 @@ Whois data download utility
 
 download_whois_data.py
 
-Release version 3.0.2 dated 2021-07-14.
+Release version 4.0.0 dated 2021-08-18.
 
 Copyright (c) 2010-2021 Whois API, Inc.  http://www.whoisxmlapi.com
 -------------------------------------------------------------------
@@ -255,9 +255,11 @@ with a new-generation account having the "custom2" subscription plan:
 
 ./download_whois_data.py --feed domain_names_whois --startdate 20210301 --enddate 20210305 --dataformats full_csv --tlds aero --plan custom2 --password MY_API_KEY --verbose --output-dir download_testdir 
 
-Download  full csv  data for  all tlds  for 2017-08-11  into "download_testdir":
+Download full csv data for all tlds for 2017-08-11 into
+"download_testdir", only from those TLDs which have data for at least
+one day.
 
-./download_whois_data.py --feed domain_names_whois --startdate 20170811 --dataformats full_csv_all_tlds  --verbose --output-dir download_testdir
+./download_whois_data.py --feed domain_names_whois --startdate 20170811 --dataformats full_csv_all_tlds  --verbose --output-dir download_testdir --only-changed
 
 6. Setting up stored authentication credentials
 -----------------------------------------------

@@ -44,14 +44,27 @@ this is normal.
 
 --------------------------------------------------------------------
 
-Q4:  So far  I have  been using  "download_whois_info.py" which  I had
+Q4: I  do not  want the script  to check all  supported TLDs  with the
+--all-tlds option in case of daily feeds; I want it to try downloading
+only for those TLDs  in which there was a change on  the given day and
+thus the data file exists.
+
+A4:  Using  the  --only-changed  option will  result  in  the  desired
+behavior. It does not work for  all daily feeds, e.g. "delta" feeds do
+not support it,  but "new" and "dropped" feeds do.  If downloading for
+multiple days,  an attempt will be  made to download data  for all the
+TLDs which had a change on at least one of the days.
+
+--------------------------------------------------------------------
+
+Q5:  So far  I have  been using  "download_whois_info.py" which  I had
 downloaded for a  release a few years ago. I've  just realized that it
 is   not   supported   anymore   and   it   has   been   replaced   by
 "download_whois_data". I  decided to  switch the  new script,  but the
 options of the  script are different and not compatible.  Why? Can you
 make it compatible?
 
-A4:  We decided  to redesign  the  python downloader  in 2017  because
+A5:  We decided  to redesign  the  python downloader  in 2017  because
 "download_whois_info.py" was  not scalable; initially it  was intended
 as a  small example script  but the requirements against  a downloader
 script  went  far  beyond  the   original  idea,  so  a  redesign  was
