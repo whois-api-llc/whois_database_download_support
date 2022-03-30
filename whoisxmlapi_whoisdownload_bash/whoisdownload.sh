@@ -11,7 +11,7 @@ LOGIN_PASSWORD=""
 #
 LANG=C
 LC_ALL=C
-VERSION="0.0.25"
+VERSION="0.0.26"
 VERBOSE="no"
 WGETPROGRESS=""
 DEBUG="no"
@@ -417,8 +417,8 @@ if [ $AUTHTYPE == "password" ];then
 	WGET_AUTH_ARGS_B="--user=$BESTWHOIS_USER --password=$BESTWHOIS_PASSWORD"
 	WGET_AUTH_ARGS_D="--user=$WHOISDATABASE_USER --password=$WHOISDATABASE_PASSWORD"
     fi
-    URLHEAD_B="http://bestwhois.org"
-    URLHEAD_D="http://www.domainwhoisdatabase.com"
+    URLHEAD_B="https://bestwhois.org"
+    URLHEAD_D="https://www.domainwhoisdatabase.com"
 fi
 if [ $AUTHTYPE == "ssl" ];then
     CACERTFILE=$(readlink -m $CACERTFILE)
@@ -616,7 +616,7 @@ function cctldDailyDiscoveredSupportedTlds()
 # returns: 0 if everything is ok, 1 otherwise.
 #
 # This function will load the file from the following url:
-# http://bestwhois.org/domain_name_data/domain_names_whois/status/supported_tlds
+# https://bestwhois.org/domain_name_data/domain_names_whois/status/supported_tlds
 # to find the supported top level domains.
 #
 # This is a short list.
@@ -641,7 +641,7 @@ function bestWhoisSupportedTlds()
 # returns: 0 if everything is ok, 1 otherwise.
 #
 # This function will load the file from the URL
-# http://bestwhois.org/ngtlds_domain_name_data/domain_names_whois/status/supported_tlds_YYYY_mm_dd 
+# https://bestwhois.org/ngtlds_domain_name_data/domain_names_whois/status/supported_tlds_YYYY_mm_dd 
 # to find the supported top level domains for a given date.
 #
 # This is the longer list, not just a few domain names.
@@ -690,7 +690,7 @@ function supportedTldsThird()
         "$feed" == "ngtlds_domain_names_whois" ]; then
         #
         # ngtlds
-        # http://bestwhois.org/ngtlds_domain_name_data/domain_names_whois/
+        # https://bestwhois.org/ngtlds_domain_name_data/domain_names_whois/
         # status/supported_tlds_$YYYY_mm_dd
         #
         baseUrl="$URLHEAD_B"
@@ -698,7 +698,7 @@ function supportedTldsThird()
         filename="supported_tlds_$date_underscore"
     else
         # other 
-        # http://bestwhois.org/domain_name_data/domain_names_whois/status/supported_tlds
+        # https://bestwhois.org/domain_name_data/domain_names_whois/status/supported_tlds
         # FIXME: domain_names_whois2 has no supported_tlds, so we use this for
         # domain_names_whois2 too.
         baseUrl="$URLHEAD_B"
@@ -814,7 +814,7 @@ function data_feed_parent_dir()
 
 #
 # and the above rules don't apply to quarterly tlds: 
-# http://www.domainwhoisdatabase.com/whois_database/v13/docs/v13.tlds
+# https://www.domainwhoisdatabase.com/whois_database/v13/docs/v13.tlds
 #
 function domainwhoisdatabaseSupportedTlds()
 {
@@ -831,7 +831,7 @@ function domainwhoisdatabaseSupportedTlds()
 
 #
 # and the above rules don't apply to quarterly cctlds: 
-# http://www.domainwhoisdatabase.com/domain_list_quarterly/v3/docs/v3.tlds
+# https://www.domainwhoisdatabase.com/domain_list_quarterly/v3/docs/v3.tlds
 #
 function domain_list_quarterly_SupportedTlds()
 {
@@ -877,7 +877,7 @@ function allTlds()
     fi
 
     # and the above rules don't apply to quarterly tlds: 
-    # http://www.domainwhoisdatabase.com/whois_database/v13/docs/v13.tlds
+    # https://www.domainwhoisdatabase.com/whois_database/v13/docs/v13.tlds
     if [ "$feed" == "whois_database" ]; then
         if ! domainwhoisdatabaseSupportedTlds; then
             printDebug "domainwhoisdatabaseSupportedTlds FAILED"
@@ -891,7 +891,7 @@ function allTlds()
     fi
 
     # and the above rules don't apply to quarterly cctlds: 
-    # http://www.domainwhoisdatabase.com/domain_list_quarterly/v3/docs/v3.tlds
+    # https://www.domainwhoisdatabase.com/domain_list_quarterly/v3/docs/v3.tlds
     if [ "$feed" == "domain_list_quarterly" ]; then
         if ! domain_list_quarterly_SupportedTlds; then
             printDebug "domain_list_quarterly_SupportedTlds FAILED"
@@ -906,14 +906,14 @@ function allTlds()
 
     # If feed is daily cctld domain names new, it is located in different area.
     # The following order(use the first valid one)
-    #       1) http://domainwhoisdatabase.com/domain_list/domain_names_new/status/supported_tlds_${YYYY_mm_dd}
-    #       2) http://domainwhoisdatabase.com/domain_list/domain_names_new/status/supported_tlds
-    #       3) http://domainwhoisdatabase.com/domain_list/domain_names_whois/status/supported_tlds_${YYYY_mm_dd}
-    #       4) http://domainwhoisdatabase.com/domain_list/domain_names_whois/status/supported_tlds
+    #       1) https://domainwhoisdatabase.com/domain_list/domain_names_new/status/supported_tlds_${YYYY_mm_dd}
+    #       2) https://domainwhoisdatabase.com/domain_list/domain_names_new/status/supported_tlds
+    #       3) https://domainwhoisdatabase.com/domain_list/domain_names_whois/status/supported_tlds_${YYYY_mm_dd}
+    #       4) https://domainwhoisdatabase.com/domain_list/domain_names_whois/status/supported_tlds
 
     # If feed is daily cctld domain names whois look at :
-    #       1) http://domainwhoisdatabase.com/domain_list/domain_names_whois/status/supported_tlds_${YYYY_mm_dd}
-    #       2) http://domainwhoisdatabase.com/domain_list/domain_names_whois/status/supported_tlds
+    #       1) https://domainwhoisdatabase.com/domain_list/domain_names_whois/status/supported_tlds_${YYYY_mm_dd}
+    #       2) https://domainwhoisdatabase.com/domain_list/domain_names_whois/status/supported_tlds
     if [ "${feed}" == "cctld_discovered_domain_names_new" ]; then
         if ! cctldDailyDiscoveredSupportedTldsForDate "${feed}" "${date_underscore}"; then
             printDebug "cctldDailyDiscoveredSupportedTldsForDate FAILED"
@@ -973,11 +973,11 @@ function allTlds()
     fi
 
     # c. for ngtlds related data feeds, use 
-    # http://bestwhois.org/ngtlds_domain_name_data/domain_names_whois/
+    # https://bestwhois.org/ngtlds_domain_name_data/domain_names_whois/
     # status/supported_tlds_$YYYY_mm_dd
     #
     # for other data feeds use 
-    # http://bestwhois.org/domain_name_data/domain_names_whois/
+    # https://bestwhois.org/domain_name_data/domain_names_whois/
     # status/supported_tlds
     #
     if ! supportedTldsThird "$feed" "$date_underscore"; then
@@ -1045,7 +1045,7 @@ function allFeeds()
 # This function will compose the file path of the data file with the given
 # properties using the directory structure specification found here:
 #
-# http://bestwhois.org/domain_name_data/domain_names_whois/README
+# https://bestwhois.org/domain_name_data/domain_names_whois/README
 #
 function filePath()
 {
@@ -1219,7 +1219,7 @@ function filePath()
     elif [ "$feed" == "reported_for_removal" ]; then
 	echo "report_for_removal_feed/whoisxmlapi_report_for_removal_${date_underscore}.tar.gz"
     #
-    # From this point the datasources are at http://www.domainwhoisdatabase.com
+    # From this point the datasources are at https://www.domainwhoisdatabase.com
     #
 	#Not thin
     elif [ "$feed" == "whois_database" -a "$THIN" == "false" ]; then
@@ -1231,6 +1231,14 @@ function filePath()
             echo "$feed/$DATABASEVERSION/csv/tlds/simple/csvs.${tld}.simple.tar.gz"
         elif [ "$FILEFORMAT" = "sql" -o "$FILEFORMAT" = "mysqldump" ]; then
             echo "$feed/$DATABASEVERSION/database_dump/mysqldump/${tld}/whoiscrawler_${DATABASEVERSION}_${tld}_mysql.sql.gz"
+	elif [ "$FILEFORMAT" = "domains" ]; then
+            echo "$feed/$DATABASEVERSION/csv/domains/${tld}/domain_names_${DATABASEVERSION}_${tld}.csv.gz"
+	elif [ "$FILEFORMAT" = "missing_domains" ]; then
+            echo "$feed/$DATABASEVERSION/csv/domains/${tld}/missing_domain_names_${DATABASEVERSION}_${tld}.csv.gz"
+	elif [ "$FILEFORMAT" = "verified_domains" ]; then
+            echo "$feed/$DATABASEVERSION/csv/domains/${tld}/verified_domain_names_${DATABASEVERSION}_${tld}.csv.gz"
+	elif [ "$FILEFORMAT" = "reserved_domains" ]; then
+            echo "$feed/$DATABASEVERSION/csv/domains/${tld}/reserved_domain_names_${DATABASEVERSION}_${tld}.csv.gz"
         fi
 	#thin
     elif [ "$feed" == "whois_database" -a "$THIN" == "true" ]; then
@@ -1260,6 +1268,14 @@ function filePath()
             echo "$feed/$DATABASEVERSION/csv/tlds/simple/csvs.${tld}.simple.tar.gz"
         elif [ "$FILEFORMAT" = "sql" -o "$FILEFORMAT" = "mysqldump" ]; then
             echo "$feed/$DATABASEVERSION/database_dump/mysqldump/${tld}/domains_whoiscrawler_${DATABASEVERSION}_${tld}_mysql.sql.gz"
+        elif [ "$FILEFORMAT" = "domains" ]; then
+            echo "$feed/$DATABASEVERSION/csv/domains/${tld}/domain_names_${DATABASEVERSION}_${tld}.csv.gz"
+        elif [ "$FILEFORMAT" = "missing_domains" ]; then
+            echo "$feed/$DATABASEVERSION/csv/domains/${tld}/missing_domain_names_${DATABASEVERSION}_${tld}.csv.gz"
+        elif [ "$FILEFORMAT" = "verified_domains" ]; then
+            echo "$feed/$DATABASEVERSION/csv/domains/${tld}/verified_domain_names_${DATABASEVERSION}_${tld}.csv.gz"
+        elif [ "$FILEFORMAT" = "reserved_domains" ]; then
+            echo "$feed/$DATABASEVERSION/csv/domains/${tld}/reserved_domain_names_${DATABASEVERSION}_${tld}.csv.gz"	
         fi
     else
         echo "Unsupported feed: '$feed'" >&2
@@ -1279,7 +1295,7 @@ function baseUrl()
     if [ "$feed" == "whois_database" -o "$feed" == "domain_list_quarterly" ]; then
         echo "$URLHEAD_D"
     elif [ "$feed" == "whois_database_combined" ]; then
-        # http://www.domainwhoisdatabase.com/whois_database/v14/database_dump/
+        # https://www.domainwhoisdatabase.com/whois_database/v14/database_dump/
         echo "$URLHEAD_D"
     elif [ "$feed" == "cctld_discovered_domain_names_new" -o \
 	   "${feed}" == "cctld_discovered_domain_names_whois" -o \
@@ -1829,7 +1845,11 @@ if [ "$FILEFORMAT" != "regular" -a "$FILEFORMAT" != "regular_csv" -a \
      "$FILEFORMAT" != "full" -a "$FILEFORMAT" != "full_csv" -a \
      "$FILEFORMAT" != "simple" -a "$FILEFORMAT" != "simple_csv" -a \
      "$FILEFORMAT" != "all" -a \
-     "$FILEFORMAT" != "sql" -a "$FILEFORMAT" != "mysqldump" ]; then
+     "$FILEFORMAT" != "sql" -a "$FILEFORMAT" != "mysqldump" -a \
+     "$FILEFORMAT" != "domains" -a \
+     "$FILEFORMAT" != "missing_domains" -a \
+     "$FILEFORMAT" != "verified_domains" -a \
+     "$FILEFORMAT" != "reserved_domains" ]; then
     echo "Unsupported file format." >&2
     echo "Supported file formats are 'regular', 'simple', 'full', 'sql', and 'all'." >&2
     echo "" >&2

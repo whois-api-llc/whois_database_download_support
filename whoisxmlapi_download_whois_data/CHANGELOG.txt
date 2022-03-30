@@ -4,6 +4,13 @@ Whois data download utility
 
 download_whois_data.py
 
+2022-03-30
+----------
+
+- Added the "domains", "verified_domains", "missing_domains", and "
+  "reserved_domains" data formats (domain lists) to the quarterly
+  database data feeds.
+
 2021-08-18
 ----------
 

@@ -1,6 +1,12 @@
 Changes
 ------
 
+0.0.26.
+  o Added the "domains", "verified_domains", "reserved_domains", and
+    "missing_domains" data formats to download domain lists from
+    quarterly ccTLD and gTLD db releases
+  o Modified base URLs to use https instead of http.
+
 0.0.25.
   o Removed the use of "realpath" as it is not available on Mac OS X by default.
 

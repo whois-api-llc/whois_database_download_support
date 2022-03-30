@@ -60,6 +60,8 @@ new_generation_plans.dat: description of the feeds available in new-generation s
 requirements.txt	: description of package requirements that can be used with pip3 in a
 			  Python virtual environment (Linux, Mac OS X)
 requirements_windows.txt: description of package requirements which can be used with pip on Windows
+requirements_legacy.txt : legacy requirements file for older systems where the current one will not work.
+			  Allows for vulnerable packages, prefer the new one if possible.
 whois_utils		: a directory with the modules used by the script.
 			  It contains the following files:
 			   __init__.py
