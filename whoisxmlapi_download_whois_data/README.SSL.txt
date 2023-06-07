@@ -1,3 +1,11 @@
+Important note 2023-06-07
+
+SSL authentication is obsolete and not anymore supported.
+With --disable-ssl-verification your creds may work, but use it at your own risk.
+
+It is recommended to prefer regular password auth.
+
+---------------------------legacy document follows
 install_p12.py
 
 Setting up ssl authentication to use with download_whois_data.py

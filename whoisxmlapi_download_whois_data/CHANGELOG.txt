@@ -4,6 +4,13 @@ Whois data download utility
 
 download_whois_data.py
 
+2023-06-07
+----------
+
+- Fixed a bug affecting newer versions of urllib3.
+  (Modification tested on newer Linux environments and python3 only.)
+- Notes made on obsoleting sslauth in docs.
+
 2022-03-30
 ----------
 

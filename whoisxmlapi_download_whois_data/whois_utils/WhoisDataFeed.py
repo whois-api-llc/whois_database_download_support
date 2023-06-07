@@ -17,9 +17,19 @@ import datetime
 
 import requests
 
-from requests.packages.urllib3.exceptions import SubjectAltNameWarning
-requests.packages.urllib3.disable_warnings(SubjectAltNameWarning)
+try:
+    from requests.packages.urllib3.exceptions import SubjectAltNameWarning
+    requests.packages.urllib3.disable_warnings(SubjectAltNameWarning)
+except:
+    pass
 
+try:
+    from requests.packages.urllib3.exceptions import InsecureRequestWarning
+    requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+except:
+    pass
+
+    
 import whois_utils.whois_web_download_utils as whois_web_download_utils
 
 import whois_utils.whois_user_interaction as whois_user_interaction
